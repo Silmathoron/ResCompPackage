@@ -1,0 +1,13 @@
+#------#
+# ToDo #
+#------#
+
+## netClasses
+
+	** is it really a good idea to make the GraphClass remember its properties?
+
+	* Check what np.full does
+	* Mettre la fonction gen_fs au propre
+	* Get the import from graph_tool clean
+	* Check who owns what in terms of arrays and values (where are deepcopies necessary)
+
