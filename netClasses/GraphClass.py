@@ -4,10 +4,10 @@
 """ GraphClass: graph generation and management """
 
 from copy import deepcopy
-from numpy import repeat
+from numpy import multiply
 
-from graph_tool import Graph()
-from grap_tool.spectral import adjacency
+from graph_tool import Graph
+from graph_tool.spectral import adjacency
 
 from graph_generation import gen_er, gen_fs, gen_edr
 from graph_measure import *
@@ -49,14 +49,19 @@ class GraphClass:
 			self.set_name()
 			self.bPropToDate = True
 
-	def __init__(self, graphToCopy):
-		''' init a copy '''
-		self.dicProperties = deepcopy(graphToCopy.get_dict_properties())
+	@classmethod
+	def from_graph_class(cls, graphToCopy):
+		''' create new GraphClass instance as a deepcopy of another '''
+		dicProperties = deepcopy(graphToCopy.get_dict_properties())
+		gtGraph = graphToCopy.get_graph().copy()
+		# create
+		graphClass = cls(dicProperties, gtGraph)
+		# set state of properties
 		bPropToDate = deepcopy(graphToCopy.bPropToDate)
 		bBetwToDate = deepcopy(graphToCopy.bBetwToDate)
-		self.__graph = graphToCopy.get_graph().copy()
-		graphToCopy.bPropToDate = bPropToDate
-		graphToCopy.bBetwToDate = bBetwToDate
+		graphClass.bPropToDate = bPropToDate
+		graphClass.bBetwToDate = bBetwToDate
+		return graphClass
 
 	#---------------------------#
 	# Manipulating the gt graph #
@@ -95,20 +100,27 @@ class GraphClass:
 	# Set or update functions #
 	#-------------------------#
 		
-	def set_name(self,name):
+	def set_name(self,name=""):
 		''' set graph name '''
-		self.dicProperties["Name"] = name
+		if name != "":
+			self.dicProperties["Name"] = name
+		else:
+			strName = self.dicProperties["Type"]
+			for key,value in self.dicProperties.items():
+				if (key != "Type") and (key != "Weighted") and (value.__class__ != dict):
+					strName += key[0] + str(value)
+			self.dicProperties["Name"] = strName
 
 	def update_prop(self, lstProp=[]):
 		''' update part or all of the graph properties '''
 		if lstProp:
 			for strPropName in lstProp:
 				if strPropName in self.dicGetProp.keys():
-					self.dicProperties[strPropName] = self.dicGetProp[strPropName]()
+					self.dicProperties[strPropName] = self.dicGetProp[strPropName](self.__graph)
 				else:
 					print("Ignoring unknown property '{}'".format(strPropName))
 		else:
-			self.dicProperties.update({ strPropName: self.dicGetProp[strPropName]() for strPropName in self.dicGetProp.keys() })
+			self.dicProperties.update({ strPropName: self.dicGetProp[strPropName](self.__graph) for strPropName in self.dicGetProp.keys() })
 			self.bPropToDate = True
 
 	#---------------#
@@ -116,6 +128,9 @@ class GraphClass:
 	#---------------#
 
 	## basic properties
+
+	def get_name(self):
+		return self.dicProperties["Name"]
 	
 	def num_vertices(self):
 		return self.__graph.num_vertices()
@@ -138,7 +153,7 @@ class GraphClass:
 		return self.__graph
 
 	def get_mat_adjacency(self):
-		return adjacency(self.__graph)
+		return adjacency(self.__graph, self.get_weights())
 
 	## complex properties
 	
@@ -180,6 +195,8 @@ class GraphClass:
 	
 	def get_weights(self):
 		if self.dicProperties["Weighted"]:
-			return self.__graph.edge_properties["weight"].a
+			epropW = self.__graph.edge_properties["weight"].copy()
+			epropW.a = multiply(epropW.a, self.__graph.edge_properties["type"].a)
+			return epropW
 		else:
-			return repeat(1, self.__graph.num_edges())
+			return self.__graph.edge_properties["type"].copy()

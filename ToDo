@@ -11,3 +11,5 @@
 	* Get the import from graph_tool clean
 	* Check who owns what in terms of arrays and values (where are deepcopies necessary)
 
+## IO
+	* test other version of neighbout_list using lil and join

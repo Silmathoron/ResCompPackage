@@ -287,11 +287,6 @@ def gen_edr(dicProperties):
 # Generating weights
 #------------------------
 
-dicGenWeights = {	"Gaussian": gaussian_weights,
-					"Lognormal": lognormal_weights,
-					"Betweenness": betweenness_correlated_weights,
-					"Degree": degree_correlated_weights	}
-
 def gaussian_weights(graph,dicProperties,nEdges,nExc):
 	rMeanExc = dicProperties["MeanExc"]
 	rMeanInhib = dicProperties["MeanInhib"]
@@ -331,3 +326,9 @@ def betweenness_correlated_weights(graph,dicProperties,nEdges,nExc):
 def degree_correlated_weights(graph,dicProperties,nEdges,nExc):
 	lstWeights = np.repeat(1, nEdges)
 	return lstWeights
+
+
+dicGenWeights = {	"Gaussian": gaussian_weights,
+					"Lognormal": lognormal_weights,
+					"Betweenness": betweenness_correlated_weights,
+					"Degree": degree_correlated_weights	}

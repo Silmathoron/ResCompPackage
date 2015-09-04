@@ -44,7 +44,7 @@ def betweenness_list(gtGraph, bWeights=True):
 #------------------------
 
 def get_assortativity(gtGraph):
-	return assortativity(gtGraph,strType)[0]
+	return assortativity(gtGraph,"total")[0]
 
 def get_reciprocity(gtGraph):
 	return edge_reciprocity(gtGraph)
@@ -64,14 +64,14 @@ def get_num_wcc(gtGraph):
 	vpropComp,lstHisto = label_components(gtGraph,directed=False)
 	return len(lstHisto)
 
-def get_diameter(gtraph):
+def get_diameter(gtGraph):
 	return pseudo_diameter(gtGraph)[0]
 
 def get_spectral_radius(gtGraph):
 	weights = gtGraph.edge_properties["type"].copy()
 	if "weight" in gtGraph.edge_properties.keys():
 		weights.a = np.multiply(weights.a,gtGraph.edge_properties["weight"].a)
-	matAdj = adjacency(graph,weights)
+	matAdj = adjacency(gtGraph,weights)
 	eigVal = [0]
 	try:
 		eigVal = spl.eigs(matAdj,return_eigenvectors=False)
