@@ -12,8 +12,7 @@ sys.path.append("../netClasses/")
 sys.path.append("../commonTools/")
 import threading
 
-from PySide import QtCore, QtGui
-from PySide.QtGui import QApplication
+from PySide import QtGui
 
 from NetWindow import NetWindow
 from GraphGenerator import GraphGenerator
@@ -66,10 +65,10 @@ class GANET:
 	def connect_interface(self):
 		if self.gui is not None:
 			# les actions sur la création ou l'analyse de graphes/connectivités
-			QtCore.QObject.connect(self.gui.pbCreateGraph, QtCore.SIGNAL("clicked()"), self.start_graphgen_process)
-			QtCore.QObject.connect(self.gui.pbCancelGraphGen, QtCore.SIGNAL("clicked()"), self.stop_graphgen_last_process)
-			QtCore.QObject.connect(self.gui.pbPlotDistrib, QtCore.SIGNAL("clicked()"), self.graphAnalyser.plotDistrib)
-			QtCore.QObject.connect(self.gui.pbPlotEvol, QtCore.SIGNAL("clicked()"), self.graphAnalyser.plotEvolProp)
+			self.gui.pbCreateGraph.clicked.connect(self.start_graphgen_process)
+			self.gui.pbCancelGraphGen.clicked.connect(self.stop_graphgen_last_process)
+			self.gui.pbPlotDistrib.clicked.connect(self.graphAnalyser.plotDistrib)
+			self.gui.pbPlotEvol.clicked.connect(self.graphAnalyser.plotEvolProp)
 			self.gui.pbMeasurements.clicked.connect(self.graphAnalyser.show_measurements)
 			self.gui.pbPlotDegDistribConnect.clicked.connect(self.resComputer.plotConnectivityDegree)
 			self.gui.pbPlotWeightDistribConnect.clicked.connect(self.resComputer.plotConnectivityWeightDistrib)
@@ -126,11 +125,6 @@ class GANET:
 			self.gui.pbCompareDegree.setEnabled(True)
 			self.gui.pbCompDegBetw.setEnabled(True)
 
-	def init_progressbar(self):
-		self.gui.progBarEvolProp.setRange(0, 100)
-		self.gui.progBarEvolProp.setVisible(True)
-		self.gui.progBarEvolProp.setValue(0.001)
-
 	def start_graphgen_process(self):
 		# remove process that terminated
 		lstToRemove = []
@@ -161,7 +155,7 @@ class GANET:
 		else:
 			self.gui.pbCancelGraphGen.setEnabled(False)
 		
-	def threadEvolProp(self):
+	def thread_evol_prop(self):
 		None # later
 
 	def __exit__(self, *args):
@@ -176,10 +170,9 @@ class GANET:
 #-----------------------
 
 if __name__ == "__main__":
-	app = QApplication(sys.argv)
+	app = QtGui.QApplication(sys.argv)
 	with GANET() as ganet:
 		ganet.connect_interface()
 		ganet.gui.show()
 		#import pdb; pdb.set_trace()
 		ret = app.exec_()
-	#~ sys.exit(ret)

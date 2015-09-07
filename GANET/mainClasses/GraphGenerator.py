@@ -31,7 +31,7 @@ class GraphGenerator:
 	def setDicPropGraph(self):
 		self.reset_dic_properties()
 		self.dicProperties["Type"] = self.parent.gui.cbNetType.currentText()
-		self.dicProperties["InhibFrac"] = self.parent.gui.dsbFracInhib.value()
+		self.dicProperties["InhibFrac"] = self.parent.gui.dsbInhibFrac.value()
 		if self.parent.gui.wBoxWeights.isChecked():
 			self.dicProperties["Weighted"] = True
 			self.dicWProp = self.parent.weightsManager.generateWeightsDictionnary()

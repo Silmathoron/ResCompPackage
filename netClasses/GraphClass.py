@@ -64,6 +64,7 @@ class GraphClass:
 		return graphClass
 
 	def copy(self):
+		''' returns a deepcopy of the graphClass instance '''
 		graphCopy = GraphClass()
 		graphCopy.set_graph(self.__graph.copy())
 		graphCopy.update_prop()

@@ -13,3 +13,6 @@
 
 ## IO
 	* test other version of neighbout_list using lil and join
+
+## GANET
+	* transform all functions into the_dash_mode

@@ -49,7 +49,7 @@ class GraphAnalyzer:
 	def setDicPropGraphEvol(self,strEvolProp,currentValProp):
 		self.reset_dic_properties()
 		self.dicProperties["Type"] = self.parent.gui.cbNetTypeEvol.currentText()
-		self.dicProperties["FracInhib"] = self.parent.gui.dsbFracInhibEvol.value()
+		self.dicProperties["InhibFrac"] = self.parent.gui.dsbInhibFracEvol.value()
 		if self.parent.gui.checkBoxNodesEvol.isChecked():
 			self.dicProperties["Nodes"] = self.parent.gui.sbNodesEvol.value()
 		if self.parent.gui.checkBoxEdgesEvol.isChecked():

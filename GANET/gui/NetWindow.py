@@ -355,6 +355,10 @@ class NetWindow(QMainWindow, Ui_MainWindow,object):
 			else:
 				self.dicCBtoGBMeas[widget].setEnabled(False)
 
+	def init_progressbar(self):
+		self.progBarEvolProp.setRange(0, 100)
+		self.progBarEvolProp.setVisible(True)
+		self.progBarEvolProp.setValue(0.001)
 
 	def set_enable_frame(self):
 		self.gbGraphMeasAxis.setEnabled(self.gbGraphMeas.isChecked())
