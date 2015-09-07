@@ -291,7 +291,7 @@ class ReservoirComputing:
 		for strCorr in self.lstCorrelType:
 			connectivity = self.generateConnectivity(strCorr)
 			self.parent.lstConnect.append(connectivity)
-			self.parent.newConnectivityAdded()
+			self.parent.new_connectivity_added()
 			# save the connectivity
 			if self.parent.checkBoxSaveConnect.isChecked():
 				strCorrel = "Anti" if self.bAntiCorr else ""

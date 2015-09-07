@@ -29,7 +29,7 @@ class GraphGenerator:
 	# set functions
 	
 	def setDicPropGraph(self):
-		self.resetDictionaries()
+		self.reset_dic_properties()
 		self.dicProperties["Type"] = self.parent.gui.cbNetType.currentText()
 		self.dicProperties["InhibFrac"] = self.parent.gui.dsbFracInhib.value()
 		if self.parent.gui.wBoxWeights.isChecked():
@@ -75,13 +75,13 @@ class GraphGenerator:
 			strName += "_{}{}-{}".format(strWeights,rWeights1,rWeights2)
 			self.dicProperties["Name"] = strName
 
-	def setProperty(self,strProp,valProp):
+	def set_property(self,strProp,valProp):
 		self.dicProperties[strProp] = valProp
 	
 	#######################
 	# Actions
 		
-	def generateGraph(self):
+	def generate_graph(self):
 		dicVarQuantities = {}
 		lstGraphShared = multiprocessing.Manager().list()
 		self.parent.lstProcessesGraphGen.append([])
@@ -96,32 +96,30 @@ class GraphGenerator:
 					self.setDicPropGraph()
 					for i in range(nClones):
 						# set properties
-						self.setProperty(strVarQuantity,val)
+						self.set_property(strVarQuantity,val)
 						strName = self.dicProperties["Name"]
 						strName += "_Var{}-{}".format(strVarQuantity[:4],val)
-						self.setProperty("Name",strName)
+						self.set_property("Name",strName)
 						# generate graph
 						strProcName = "{}{}_{}".format(strVarQuantity,val,i)
-						self.parent.lstProcessesGraphGen[-1].append(multiprocessing.Process(name=strProcName, target=self.makeGraph, args=(lstGraphShared, self.dicProperties, strVarQuantity, val)))
+						self.parent.lstProcessesGraphGen[-1].append(multiprocessing.Process(name=strProcName, target=self.make_graph, args=(lstGraphShared, self.dicProperties, strVarQuantity, val)))
 						self.parent.lstProcessesGraphGen[-1][-1].start()
 						if i+1 % 5 == 0:
 							time.sleep(2) # to spare systems with not to much ram
 		else:
 			# on crée un dictionnaire contenant les propriétés du graphe
 			self.setDicPropGraph()
-			print(self.dicProperties.keys())
 			for i in range(nClones):
 				strProcName = "proc_{}".format(i)
-				self.parent.lstProcessesGraphGen[-1].append(multiprocessing.Process(name=strProcName, target=self.makeGraph, args=(lstGraphShared, self.dicProperties)))
+				self.parent.lstProcessesGraphGen[-1].append(multiprocessing.Process(name=strProcName, target=self.make_graph, args=(lstGraphShared, self.dicProperties)))
 				self.parent.lstProcessesGraphGen[-1][-1].start()
 				if i+1 % 5 == 0:
 					time.sleep(2) # to spare systems with not to much ram
 		# on reset les dictionnaires
-		self.resetDictionaries()
+		self.reset_dic_properties()
 		# remove the processes from the list
 		for proc in self.parent.lstProcessesGraphGen[-1]:
 			proc.join()
-		print("all finished")
 		if self.parent.lstProcessesGraphGen and not self.parent.bProcKilled:
 			self.parent.lstProcessesGraphGen.pop()
 			if not self.parent.lstProcessesGraphGen:
@@ -129,10 +127,9 @@ class GraphGenerator:
 		else:
 			self.parent.bProcKilled = False
 		# update main interface
-		print("before adding")
-		self.parent.newGraphAdded(lstGraphShared)
+		self.parent.new_graph_added(lstGraphShared)
 
-	def makeGraph(self, lstGraphShared, strVarQuantity="", val=None):
+	def make_graph(self, lstGraphShared, strVarQuantity="", val=None):
 		if strVarQuantity:
 			lstGraphShared.append(GraphClass(self.dicProperties))
 			if self.parent.gui.checkBoxSaveGenGraphs.isChecked(): # save if needed
@@ -142,10 +139,8 @@ class GraphGenerator:
 			lstGraphShared.append(graph) # on construit l'objet GraphClass
 			if self.parent.gui.checkBoxSaveGenGraphs.isChecked(): # save if needed
 				self.parent.fileManager.saveNeighbourList(lstGraphShared[-1])
-		print("out of make")
-			
 
-	def resetDictionaries(self):
+	def reset_dic_properties(self):
 		self.dicProperties = {}
 	
 	#######################

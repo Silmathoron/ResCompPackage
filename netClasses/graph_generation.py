@@ -49,14 +49,15 @@ def gen_er(dicProperties):
 		graphER.add_vertex(nNodes)
 		dicProperties["Nodes"] = nNodes
 	# generate edges
-	numTest = 0
-	while graphER.num_edges() != nEdges and numTest < n_MAXTESTS:
-		lstEdges = np.random.randint(0,nNodes,(nEdges,2))
+	numTest,numCurrentEdges = 0,0
+	while numCurrentEdges != nEdges and numTest < n_MAXTESTS:
+		lstEdges = np.random.randint(0,nNodes,(nEdges-numCurrentEdges,2))
 		graphER.add_edge_list(lstEdges)
 		# remove loops and duplicate edges
 		remove_self_loops(graphER)
+		remove_parallel_edges(graphER)
+		numCurrentEdges = graphER.num_edges()
 		numTest += 1
-	remove_parallel_edges(graphER)
 	graphER.reindex_edges()
 	nEdges = graphER.num_edges()
 	rDens = nEdges / float(nNodes**2)
@@ -150,7 +151,6 @@ def gen_fs(dicProperties):
 		nOutStubs+=nAddOutStubs
 	# on s'assure d'avoir le même nombre de in et out stubs (1.13 is an experimental correction)
 	nMaxStubs = int(1.13*(2.0*nArcs)/(2*(1+rFracRecip)))
-	print(nMaxStubs, nInStubs, nOutStubs)
 	if nInStubs > nMaxStubs and nOutStubs > nMaxStubs:
 		np.random.shuffle(lstInStubs)
 		np.random.shuffle(lstOutStubs)

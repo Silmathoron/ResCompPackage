@@ -6,6 +6,7 @@
 import numpy as np
 import subprocess
 from copy import deepcopy
+import sys
 import multiprocessing
 
 from PySide import QtGui
@@ -13,6 +14,8 @@ from PySide import QtGui
 from GraphClass import GraphClass
 from graph_measure import *
 from plotWidget import PlotWidget
+sys.path.append(sys.path[0]+'/mainClasses/classTools/')
+from graph_analysis_tools import *
 
 
 #
@@ -36,7 +39,6 @@ class GraphAnalyzer:
 								"Lognormal": self.setLogNormWeights}'''
 		# la base (les attributs de l'instance)
 		self.dicProperties = {}
-		self.dicWProp = {}
 		self.plottingWidget = PlotWidget()
 		#~ self.updateProgress = QtCore.Signal(int)
 
@@ -45,7 +47,7 @@ class GraphAnalyzer:
 	#---------------#
 
 	def setDicPropGraphEvol(self,strEvolProp,currentValProp):
-		self.resetDictionaries()
+		self.reset_dic_properties()
 		self.dicProperties["Type"] = self.parent.gui.cbNetTypeEvol.currentText()
 		self.dicProperties["FracInhib"] = self.parent.gui.dsbFracInhibEvol.value()
 		if self.parent.gui.checkBoxNodesEvol.isChecked():
@@ -72,26 +74,13 @@ class GraphAnalyzer:
 		self.dicProperties["Name"] = strName
 		self.dicProperties[strEvolProp] = currentValProp
 
-	def resetDictionaries(self):
+	def reset_dic_properties(self):
 		self.dicProperties = {}
-		self.dicWProp = {}
-
-	'''def setGaussWeights(self):
-		self.dicWProp["MeanExc"] = self.parent.gui.dsbMeanExcWeights.value()
-		self.dicWProp["VarExc"] = self.parent.gui.dsbVarExcWeights.value()
-		self.dicWProp["MeanInhib"] = self.parent.gui.dsbMeanInhibWeights.value()
-		self.dicWProp["VarInhib"] = self.parent.gui.dsbVarInhibWeights.value()
-
-	def setLogNormWeights(self):
-		self.dicWProp["ScaleExc"] = self.dsbScaleExcWeights.value()
-		self.dicWProp["LocationExc"] = self.dsbLocationExcWeights.value()
-		self.dicWProp["ScaleInhib"] = self.dsbScaleInhibWeights.value()
-		self.dicWProp["LocationInhib"] = self.dsbLocationInhibWeights.value()'''
 
 	##################
 	# get functions
 
-	def getMeasurements(self):
+	def get_measurements(self):
 		lstMeas = []
 		if self.parent.gui.gbAssort.isEnabled():
 			lstMeas.append(self.parent.gui.gbAssort.title())
@@ -117,7 +106,7 @@ class GraphAnalyzer:
 		# get selected graph
 		idxCurrent = self.parent.gui.comboBoxSelectGraph.currentIndex()
 		graph = self.parent.gui.comboBoxSelectGraph.itemData(idxCurrent)
-		strGraphName = graph.getName().replace(".","p")
+		strGraphName = graph.get_name().replace(".","p")
 		# do we care about weights?
 		bWeights = False
 		if self.parent.gui.checkBoxConsiderWeights.isChecked():
@@ -173,16 +162,16 @@ class GraphAnalyzer:
 			for strType in dicGraphType.keys():
 				if strType not in dicGraphStorage.keys():
 					dicGraphStorage[strType] = dicGraphType[strType]()
-				arrWeightCount, arrWeight = weightDistribution(dicGraphStorage[strType],False)
+				arrWeightCount, arrWeight = weight_distribution(dicGraphStorage[strType],False)
 				dicPlots["Weight distrib. ({})".format(strType)] = [np.array([arrWeight,arrWeightCount]), "Count", "Weight"]
 			plotView = self.plottingWidget.createPlotView(dicPlots)
-			self.plottingWidget.addPlotView(graph.getName(),plotView)
+			self.plottingWidget.addPlotView(graph.get_name(),plotView)
 			self.plottingWidget.show()
 		# nodes' properties
 		bNodeProp = False
 		strHeader = "Node"
-		lstStrVal = np.arange(graph.getNodes()).astype(str)
-		lstTab = np.repeat("\t",graph.getNodes())
+		lstStrVal = np.arange(graph.num_vertices()).astype(str)
+		lstTab = np.repeat("\t",graph.num_vertices())
 		if self.parent.gui.checkBoxBetwVal.isChecked():
 			bNodeProp = True
 			for strType in dicGraphType.keys():
@@ -202,17 +191,17 @@ class GraphAnalyzer:
 				if self.parent.gui.checkBoxInDegVal.isChecked():
 					strHeader += "\tIn-deg.-" + strType
 					lstStrVal = np.core.defchararray.add(lstStrVal,lstTab)
-					lstDeg = dicGraphStorage[strType].getGraph().degree_property_map("in").a
+					lstDeg = dicGraphStorage[strType].get_graph().degree_property_map("in").a
 					lstStrVal = np.core.defchararray.add(lstStrVal,lstDeg.astype(str))
 				if self.parent.gui.checkBoxOutDegVal.isChecked():
 					strHeader += "\tOut-deg.-" + strType
 					lstStrVal = np.core.defchararray.add(lstStrVal,lstTab)
-					lstDeg = dicGraphStorage[strType].getGraph().degree_property_map("out").a
+					lstDeg = dicGraphStorage[strType].get_graph().degree_property_map("out").a
 					lstStrVal = np.core.defchararray.add(lstStrVal,lstDeg.astype(str))
 				if self.parent.gui.checkBoxTotDegVal.isChecked():
 					strHeader += "\tTot.-deg.-" + strType
 					lstStrVal = np.core.defchararray.add(lstStrVal,lstTab)
-					lstDeg = dicGraphStorage[strType].getGraph().degree_property_map("total").a
+					lstDeg = dicGraphStorage[strType].get_graph().degree_property_map("total").a
 					lstStrVal = np.core.defchararray.add(lstStrVal,lstDeg.astype(str))
 		strHeader+="\n"
 		if bNodeProp:
@@ -246,19 +235,19 @@ class GraphAnalyzer:
 				if strType not in dicGraphStorage.keys():
 					dicGraphStorage[strType] = dicGraphType[strType]()
 				if self.parent.gui.checkBoxInDegSort.isChecked():
-					lstDeg = dicGraphStorage[strType].getGraph().degree_property_map("in").a
+					lstDeg = dicGraphStorage[strType].get_graph().degree_property_map("in").a
 					strSort += "Node in-degree sorting - " + strType + "\n"
 					for i in range(nNodesToKeep):
 						strSort += " {}".format(lstDeg[i])
 					strSort += "\n"
 				if self.parent.gui.checkBoxOutDegSort.isChecked():
-					lstDeg = dicGraphStorage[strType].getGraph().degree_property_map("out").a
+					lstDeg = dicGraphStorage[strType].get_graph().degree_property_map("out").a
 					strSort += "Node out-degree sorting - " + strType + "\n"
 					for i in range(nNodesToKeep):
 						strSort += " {}".format(lstDeg[i])
 					strSort += "\n"
 				if self.parent.gui.checkBoxTotDegSort.isChecked():
-					lstDeg = dicGraphStorage[strType].getGraph().degree_property_map("total").a
+					lstDeg = dicGraphStorage[strType].get_graph().degree_property_map("total").a
 					strSort += "Node total-degree sorting - " + strType + "\n"
 					for i in range(nNodesToKeep):
 						strSort += " {}".format(lstDeg[i])
@@ -283,8 +272,8 @@ class GraphAnalyzer:
 			numAvg = self.parent.gui.sbAverage.value()
 		print("--- Averaging over {} samples ---".format(numAvg))
 		dicVaryingQuantities = {}
-		lstStrMeasurements = self.getMeasurements()
-		dicVaryingQuantities = self.getVaryingQuantities()
+		lstStrMeasurements = self.get_measurements()
+		dicVaryingQuantities = self.get_varying_quantities()
 		# check log and weights
 		bWeights = False
 		dicLog = {	"Degree": False,
@@ -306,7 +295,7 @@ class GraphAnalyzer:
 		# for each varying quantity
 		for strVarQuantity,lstVarValues in dicVaryingQuantities.items():
 			# initialize progressbar and plots informations
-			self.parent.gui.initProgressBar()
+			self.parent.gui.init_progressbar()
 			dicPlotFunc, dicArgs, dicStrGp = checkPlots(self.parent,lstSubgraphTypes, strVarQuantity)
 			nNecessarySteps = len(lstVarValues)
 			# file names
@@ -332,8 +321,8 @@ class GraphAnalyzer:
 				for j in range(numAvg):
 					graph = GraphClass(self.dicProperties)
 					QtGui.qApp.processEvents()
-					strGraphName = graph.getName().replace('.', 'p')
-					numNodes = graph.getNodes()
+					strGraphName = graph.get_name().replace('.', 'p')
+					numNodes = graph.num_vertices()
 					# for each subgraph (exc, inhib, all/complete)
 					for subgraphType, dicAvg in dicGraphAvgValues.items():
 						#~ dicGraphDistribs = dicGraphAvgDistrib[subgraphType]
@@ -385,7 +374,7 @@ class GraphAnalyzer:
 						fileGP.write(dicStrGp[subgraphType][strPlot])
 					subprocess.call(["gnuplot", strSubprocess]) # careful to call it OUT of 'with open(...) as ...'
 
-	def getVaryingQuantities(self):
+	def get_varying_quantities(self):
 		dicVaryingQuantities = {}
 		dicSSS = {"Start": 0, "Stop": 0, "Step": 0}
 		for child in self.parent.gui.gbEvolX.children():
@@ -405,34 +394,34 @@ class GraphAnalyzer:
 					dicVaryingQuantities[strQuantity] = np.arange(dicSSS["Start"], dicSSS["Stop"], dicSSS["Step"])
 		return dicVaryingQuantities
 
-	def showMeasurements(self):
-		lstStrMeasurements = self.getMeasurements()
+	def show_measurements(self):
+		lstStrMeasurements = self.get_measurements()
 		dicData = {}
 		idxCurrent = self.parent.gui.comboBoxSelectGraph.currentIndex()
 		graph = self.parent.gui.comboBoxSelectGraph.itemData(idxCurrent)
-		print(graph.getDensity())
+		print(graph.get_density())
 		if self.parent.gui.gbGraphMeas.isChecked():
 			if self.parent.gui.checkBoxAnalyzeExc.isChecked():
 				subGraph = graph.genExcSubgraph()
 				for strMeas in lstStrMeasurements:
-					rMeas = self.dicNetAnalysis[strMeas](subGraph.getGraph())
+					rMeas = self.dicNetAnalysis[strMeas](subGraph.get_graph())
 					dicData[strMeas] = rMeas
-				strTitle = graph.getName() + "Exc"
+				strTitle = graph.get_name() + "Exc"
 				self.plottingWidget.addData(strTitle,dicData)
 				dicData = {}
 			if self.parent.gui.checkBoxAnalyzeInhib.isChecked():
 				subGraph = graph.genInhibSubgraph()
 				for strMeas in lstStrMeasurements:
-					rMeas = self.dicNetAnalysis[strMeas](subGraph.getGraph())
+					rMeas = self.dicNetAnalysis[strMeas](subGraph.get_graph())
 					dicData[strMeas] = rMeas
-				strTitle = graph.getName() + "Inhib"
+				strTitle = graph.get_name() + "Inhib"
 				self.plottingWidget.addData(strTitle,dicData)
 				dicData = {}
 			if self.parent.gui.checkBoxAnalyzeAll.isChecked():
 				for strMeas in lstStrMeasurements:
-					rMeas = self.dicNetAnalysis[strMeas](graph.getGraph())
+					rMeas = self.dicNetAnalysis[strMeas](graph.get_graph())
 					dicData[strMeas] = rMeas
-				strTitle = graph.getName()
+				strTitle = graph.get_name()
 				self.plottingWidget.addData(strTitle,dicData)
 		self.plottingWidget.show()
 

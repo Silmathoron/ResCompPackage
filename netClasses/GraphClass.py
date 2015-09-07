@@ -63,6 +63,13 @@ class GraphClass:
 		graphClass.bBetwToDate = bBetwToDate
 		return graphClass
 
+	def copy(self):
+		graphCopy = GraphClass()
+		graphCopy.set_graph(self.__graph.copy())
+		graphCopy.update_prop()
+		graphCopy.set_name(self.dicProperties["Name"]+'_copy')
+		return graphCopy
+
 	#---------------------------#
 	# Manipulating the gt graph #
 	#---------------------------#
@@ -104,12 +111,12 @@ class GraphClass:
 		''' set graph name '''
 		if name != "":
 			self.dicProperties["Name"] = name
-		else:
-			strName = self.dicProperties["Type"]
-			for key,value in self.dicProperties.items():
-				if (key != "Type") and (key != "Weighted") and (value.__class__ != dict):
-					strName += key[0] + str(value)
-			self.dicProperties["Name"] = strName
+		#~ else:
+			#~ strName = self.dicProperties["Type"]
+			#~ for key,value in self.dicProperties.items():
+				#~ if (key != "Type") and (key != "Weighted") and (value.__class__ != dict):
+					#~ strName += '_' + key[0] + str(value)
+			#~ self.dicProperties["Name"] = strName
 
 	def update_prop(self, lstProp=[]):
 		''' update part or all of the graph properties '''
@@ -200,3 +207,10 @@ class GraphClass:
 			return epropW
 		else:
 			return self.__graph.edge_properties["type"].copy()
+
+	#--------#
+	# Delete #
+	#--------#
+
+	#~ def __del__(self):
+		#~ print("graph died")

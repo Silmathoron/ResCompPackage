@@ -26,14 +26,14 @@ class NetWindow(QMainWindow, Ui_MainWindow,object):
 		# on passe en UTF8
 		QtCore.QTextCodec.setCodecForCStrings(QtCore.QTextCodec.codecForName("UTF-8"))
 		# on initialize les paramètres
-		self.dicGraphType = {0: self.setErdosType,
-								1: self.setFreeScaleType,
-								2: self.setEDRType }
-		self.dicEvolType = {0: self.setErdosEvol,
-								1: self.setFreeScaleEvol,
-								2: self.setEDREvol }
-		self.dicWeightsType = {	"Gaussian": self.setGaussWeights,
-								"Lognormal": self.setLogNormWeights}
+		self.dicGraphType = {0: self.set_erdos_gen,
+								1: self.set_free_scale_gen,
+								2: self.set_edr_gen }
+		self.dicEvolType = {0: self.set_erdos_evol,
+								1: self.set_free_scale_evol,
+								2: self.set_edr_evol }
+		self.dicWeightsType = {	"Gaussian": self.set_gauss_weights,
+								"Lognormal": self.set_lognormal_weights}
 		self.dicCBtoGBMeas = {	self.checkBoxAssort: self.gbAssort,
 								self.checkBoxCluster: self.gbClustering,
 								self.checkBoxRecip: self.gbReciprocity,
@@ -83,86 +83,86 @@ class NetWindow(QMainWindow, Ui_MainWindow,object):
 		self.lstUncheckGenCB = [self.checkBoxEdges]
 		self.lstCheckGenCB = [self.checkBoxDensity,self.checkBoxNodes]
 		# initialisation
-		self.initAll()
+		self.init_all()
 
-	def initAll(self):
+	def init_all(self):
 		#on initialise l'interface
-		self.setNetGenInterface()
+		self.set_netgen_interface()
 		# on désactive les boutons de save/plot
 		self.pbPlotDistrib.setEnabled(False)
 		self.pbSave.setEnabled(False)
 		#on connecte
 			# les maj interface
-		QtCore.QObject.connect(self.cbNetType, QtCore.SIGNAL("currentIndexChanged(int)"), self.setNetGenInterface)
-		QtCore.QObject.connect(self.cbNetTypeEvol, QtCore.SIGNAL("currentIndexChanged(int)"), self.setNetGenInterface)
-		QtCore.QObject.connect(self.cbWeightsDistrib, QtCore.SIGNAL("currentIndexChanged(int)"), self.setNetGenInterface)
+		QtCore.QObject.connect(self.cbNetType, QtCore.SIGNAL("currentIndexChanged(int)"), self.set_netgen_interface)
+		QtCore.QObject.connect(self.cbNetTypeEvol, QtCore.SIGNAL("currentIndexChanged(int)"), self.set_netgen_interface)
+		QtCore.QObject.connect(self.cbWeightsDistrib, QtCore.SIGNAL("currentIndexChanged(int)"), self.set_netgen_interface)
 		# supervising the interface
 			# evol
-		self.gbGraphMeas.clicked.connect(self.setEnableFrame)
-		self.checkBoxAssort.clicked.connect(self.setEvolParam)
-		self.checkBoxCluster.clicked.connect(self.setEvolParam)
-		self.checkBoxRecip.clicked.connect(self.setEvolParam)
-		self.checkBoxCC.clicked.connect(self.setEvolParam)
-		self.checkBoxDiam.clicked.connect(self.setEvolParam)
-		self.checkBoxSpectrum.clicked.connect(self.setEvolParam)
-		self.gbInDegExp.clicked.connect(self.setEvolParam)
-		self.gbOutDegExp.clicked.connect(self.setEvolParam)
-		self.gbRecip.clicked.connect(self.setEvolParam)
-		self.gbLambda.clicked.connect(self.setEvolParam)
-		self.gbNeuronDens.clicked.connect(self.setEvolParam)
-		self.checkBoxInDegExpEvol.clicked.connect(self.setEvolParam)
-		self.checkBoxOutDegExpEvol.clicked.connect(self.setEvolParam)
-		self.checkBoxReciprocityEvol.clicked.connect(self.setEvolParam)
-		self.checkBoxLambdaEvol.clicked.connect(self.setEvolParam)
-		self.checkBoxNeuronDensEvol.clicked.connect(self.setEvolParam)
-		self.checkBoxAvg.clicked.connect(self.setEvolParam)
+		self.gbGraphMeas.clicked.connect(self.set_enable_frame)
+		self.checkBoxAssort.clicked.connect(self.set_evol_param)
+		self.checkBoxCluster.clicked.connect(self.set_evol_param)
+		self.checkBoxRecip.clicked.connect(self.set_evol_param)
+		self.checkBoxCC.clicked.connect(self.set_evol_param)
+		self.checkBoxDiam.clicked.connect(self.set_evol_param)
+		self.checkBoxSpectrum.clicked.connect(self.set_evol_param)
+		self.gbInDegExp.clicked.connect(self.set_evol_param)
+		self.gbOutDegExp.clicked.connect(self.set_evol_param)
+		self.gbRecip.clicked.connect(self.set_evol_param)
+		self.gbLambda.clicked.connect(self.set_evol_param)
+		self.gbNeuronDens.clicked.connect(self.set_evol_param)
+		self.checkBoxInDegExpEvol.clicked.connect(self.set_evol_param)
+		self.checkBoxOutDegExpEvol.clicked.connect(self.set_evol_param)
+		self.checkBoxReciprocityEvol.clicked.connect(self.set_evol_param)
+		self.checkBoxLambdaEvol.clicked.connect(self.set_evol_param)
+		self.checkBoxNeuronDensEvol.clicked.connect(self.set_evol_param)
+		self.checkBoxAvg.clicked.connect(self.set_evol_param)
 			# gen/series
-		self.gbGenSeries.clicked.connect(self.switchSingleSeries)
-		self.gbInDegExpSeries.clicked.connect(self.updateGenVariables)
-		self.gbOutDegExpSeries.clicked.connect(self.updateGenVariables)
-		self.gbRecipSeries.clicked.connect(self.updateGenVariables)
-		self.gbLambdaSeries.clicked.connect(self.updateGenVariables)
-		self.gbNeuronDensSeries.clicked.connect(self.updateGenVariables)
-		self.checkBoxInDegExp.clicked.connect(self.updateGenVariables)
-		self.checkBoxOutDegExp.clicked.connect(self.updateGenVariables)
-		self.checkBoxReciprocity.clicked.connect(self.updateGenVariables)
-		self.checkBoxLambda.clicked.connect(self.updateGenVariables)
-		self.checkBoxNeurDens.clicked.connect(self.updateGenVariables)
+		self.gbGenSeries.clicked.connect(self.switch_single_series)
+		self.gbInDegExpSeries.clicked.connect(self.update_graph_gen_variables)
+		self.gbOutDegExpSeries.clicked.connect(self.update_graph_gen_variables)
+		self.gbRecipSeries.clicked.connect(self.update_graph_gen_variables)
+		self.gbLambdaSeries.clicked.connect(self.update_graph_gen_variables)
+		self.gbNeuronDensSeries.clicked.connect(self.update_graph_gen_variables)
+		self.checkBoxInDegExp.clicked.connect(self.update_graph_gen_variables)
+		self.checkBoxOutDegExp.clicked.connect(self.update_graph_gen_variables)
+		self.checkBoxReciprocity.clicked.connect(self.update_graph_gen_variables)
+		self.checkBoxLambda.clicked.connect(self.update_graph_gen_variables)
+		self.checkBoxNeurDens.clicked.connect(self.update_graph_gen_variables)
 		for child in self.gbGenSeries.children():
 			if child != self.gbGenSeries.layout():
 				for subChild in child.children():
 					if subChild.__class__ == QtGui.QDoubleSpinBox or subChild.__class__ == QtGui.QSpinBox:
-						subChild.valueChanged.connect(self.updateGenStaticValue)
+						subChild.valueChanged.connect(self.update_graph_gen_static_values)
 		for child in self.gbEvolX.children():
 			if child != self.gbGenSeries.layout():
 				for subChild in child.children():
 					if subChild.__class__ == QtGui.QDoubleSpinBox or subChild.__class__ == QtGui.QSpinBox:
-						subChild.valueChanged.connect(self.updateEvolStaticValue)
+						subChild.valueChanged.connect(self.update_evol_prop_static_values)
 		#connect comboBoxSelectGraph
-		self.comboBoxSelectGraph.currentIndexChanged.connect(self.updateSbNodesToKeep)
+		self.comboBoxSelectGraph.currentIndexChanged.connect(self.update_sb_keep_nodes)
 		# supervising the nodes/edges/density interactions
 			# graph gen
-		self.checkBoxNodes.clicked.connect(self.handlerGen)
-		self.checkBoxDensity.clicked.connect(self.handlerGen)
-		self.checkBoxEdges.clicked.connect(self.handlerGen)
-		self.gbVarDensitySeries.clicked.connect(self.handlerGen)
-		self.gbVarEdgesSeries.clicked.connect(self.handlerGen)
-		self.gbVarNodesSeries.clicked.connect(self.handlerGen)
+		self.checkBoxNodes.clicked.connect(self.hangler_graph_gen)
+		self.checkBoxDensity.clicked.connect(self.hangler_graph_gen)
+		self.checkBoxEdges.clicked.connect(self.hangler_graph_gen)
+		self.gbVarDensitySeries.clicked.connect(self.hangler_graph_gen)
+		self.gbVarEdgesSeries.clicked.connect(self.hangler_graph_gen)
+		self.gbVarNodesSeries.clicked.connect(self.hangler_graph_gen)
 			# evol prop
-		self.gbVarDensity.clicked.connect(self.handlerEvol)
-		self.gbVarEdges.clicked.connect(self.handlerEvol)
-		self.gbVarNodes.clicked.connect(self.handlerEvol)
-		self.checkBoxNodesEvol.clicked.connect(self.handlerEvol)
-		self.checkBoxDensityEvol.clicked.connect(self.handlerEvol)
-		self.checkBoxEdgesEvol.clicked.connect(self.handlerEvol)
-		# connect closeEvent
-		QtCore.QObject.connect(self, QtCore.SIGNAL('triggered()'), self.closeEvent)
+		self.gbVarDensity.clicked.connect(self.hangler_evol_prop)
+		self.gbVarEdges.clicked.connect(self.hangler_evol_prop)
+		self.gbVarNodes.clicked.connect(self.hangler_evol_prop)
+		self.checkBoxNodesEvol.clicked.connect(self.hangler_evol_prop)
+		self.checkBoxDensityEvol.clicked.connect(self.hangler_evol_prop)
+		self.checkBoxEdgesEvol.clicked.connect(self.hangler_evol_prop)
+		# connect event_close
+		QtCore.QObject.connect(self, QtCore.SIGNAL('triggered()'), self.event_close)
 
 	#-------------#
 	# L'interface #
 	#-------------#
 
-	def setNetGenInterface(self):
+	def set_netgen_interface(self):
 		# launch the associated function
 		self.dicGraphType[self.cbNetType.currentIndex()]()
 		self.dicEvolType[self.cbNetTypeEvol.currentIndex()]()
@@ -170,7 +170,7 @@ class NetWindow(QMainWindow, Ui_MainWindow,object):
 		# hide progress bar
 		self.progBarEvolProp.setVisible(False)
 
-	def switchSingleSeries(self):
+	def switch_single_series(self):
 		if not self.gbGenSeries.isChecked():
 			lstNED = [self.gbVarDensitySeries,self.gbVarNodesSeries,self.gbVarEdgesSeries]
 			for gb,cb in self.dicGBtoCBgen.items():
@@ -188,7 +188,7 @@ class NetWindow(QMainWindow, Ui_MainWindow,object):
 	# Nodes, edges, density #
 	#-----------------------#
 
-	def handlerGen(self):
+	def hangler_graph_gen(self):
 		nCount = 0
 		widget = self.sender()
 		widgetCB = None
@@ -256,7 +256,7 @@ class NetWindow(QMainWindow, Ui_MainWindow,object):
 					self.lstCheckGenCB.append(self.lstUncheckGenCB.pop(1))
 					self.lstCheckGenCB[-1].setCheckState(QtCore.Qt.Checked)
 
-	def handlerEvol(self):
+	def hangler_evol_prop(self):
 		widget = self.sender()
 		widgetCB = None
 		if widget in self.wBoxNetTypeEvol.children():
@@ -327,7 +327,7 @@ class NetWindow(QMainWindow, Ui_MainWindow,object):
 	# Other parameters #
 	#------------------#
 
-	def setEvolParam(self):
+	def set_evol_param(self):
 		widget = self.sender()
 		strWText = ""
 		if widget in self.dicCBtoGBevol.keys():
@@ -356,7 +356,7 @@ class NetWindow(QMainWindow, Ui_MainWindow,object):
 				self.dicCBtoGBMeas[widget].setEnabled(False)
 
 
-	def setEnableFrame(self):
+	def set_enable_frame(self):
 		self.gbGraphMeasAxis.setEnabled(self.gbGraphMeas.isChecked())
 
 	'''def updateEvol(self):
@@ -369,7 +369,7 @@ class NetWindow(QMainWindow, Ui_MainWindow,object):
 			self.checkBoxSaveEvolGraphs.setVisible(True)
 			self.lineSaveGraphs.setVisible(True)'''
 
-	def updateGenVariables(self):
+	def update_graph_gen_variables(self):
 		widget = self.sender()
 		if widget in self.gbGenSeries.children():
 			associatedCB = self.dicGBtoCBgen[widget]
@@ -386,7 +386,7 @@ class NetWindow(QMainWindow, Ui_MainWindow,object):
 			else:
 				associatedGB.setChecked(True)
 
-	def updateGenStaticValue(self):
+	def update_graph_gen_static_values(self):
 		widget = self.sender()
 		parent = widget.parent()
 		sbAssociated = self.dicGBtoSBgen[parent]
@@ -401,7 +401,7 @@ class NetWindow(QMainWindow, Ui_MainWindow,object):
 		# update the (double)spinBox
 		sbAssociated.setValue(valAverage)
 
-	def updateEvolStaticValue(self,groupBox):
+	def update_evol_prop_static_values(self,groupBox):
 		widget = self.sender()
 		parent = widget.parent()
 		sbAssociated = self.dicGBtoSBevol[parent]
@@ -420,7 +420,7 @@ class NetWindow(QMainWindow, Ui_MainWindow,object):
 	# Network types #
 	#---------------#
 
-	def setErdosType(self):
+	def set_erdos_gen(self):
 		# hide the unused widgets
 		self.checkBoxInDegExp.setVisible(False)
 		self.dsbInDegExp.setVisible(False)
@@ -438,7 +438,7 @@ class NetWindow(QMainWindow, Ui_MainWindow,object):
 		self.gbLambdaSeries.setVisible(False)
 		self.gbNeuronDensSeries.setVisible(False)
 
-	def setErdosEvol(self):
+	def set_erdos_evol(self):
 		self.gbNeuronDens.setVisible(False)
 		self.gbLambda.setVisible(False)
 		self.gbInDegExp.setVisible(False)
@@ -455,7 +455,7 @@ class NetWindow(QMainWindow, Ui_MainWindow,object):
 		self.checkBoxNeuronDensEvol.setVisible(False)
 		self.sbNeuronDensEvol.setVisible(False)
 
-	def setFreeScaleType(self):
+	def set_free_scale_gen(self):
 		# hide the unused widgets
 		self.dsbLambda.setVisible(False)
 		self.sbNeuronDens.setVisible(False)
@@ -473,7 +473,7 @@ class NetWindow(QMainWindow, Ui_MainWindow,object):
 		self.gbLambdaSeries.setVisible(False)
 		self.gbNeuronDensSeries.setVisible(False)
 
-	def setFreeScaleEvol(self):
+	def set_free_scale_evol(self):
 		self.gbNeuronDens.setVisible(False)
 		self.gbLambda.setVisible(False)
 		self.gbInDegExp.setVisible(True)
@@ -490,7 +490,7 @@ class NetWindow(QMainWindow, Ui_MainWindow,object):
 		self.checkBoxNeuronDensEvol.setVisible(False)
 		self.sbNeuronDensEvol.setVisible(False)
 
-	def setEDRType(self):
+	def set_edr_gen(self):
 		# hide the unused widgets
 		self.dsbInDegExp.setVisible(False)
 		self.dsbOutDegExp.setVisible(False)
@@ -508,7 +508,7 @@ class NetWindow(QMainWindow, Ui_MainWindow,object):
 		self.gbLambdaSeries.setVisible(True)
 		self.gbNeuronDensSeries.setVisible(True)
 
-	def setEDREvol(self):
+	def set_edr_evol(self):
 		self.gbNeuronDens.setVisible(True)
 		self.gbLambda.setVisible(True)
 		self.checkBoxLambdaEvol.setVisible(True)
@@ -527,7 +527,7 @@ class NetWindow(QMainWindow, Ui_MainWindow,object):
 		self.checkBoxReciprocityEvol.setVisible(False)
 		self.dsbRecipEvol.setVisible(False)
 
-	def setGaussWeights(self):
+	def set_gauss_weights(self):
 		self.labelScaleExc.setVisible(False)
 		self.labelScaleInhib.setVisible(False)
 		self.labelLocationInhib.setVisible(False)
@@ -545,7 +545,7 @@ class NetWindow(QMainWindow, Ui_MainWindow,object):
 		self.dsbMeanInhibWeights.setVisible(True)
 		self.dsbMeanExcWeights.setVisible(True)
 
-	def setLogNormWeights(self):
+	def set_lognormal_weights(self):
 		self.labelMeanExc.setVisible(False)
 		self.labelMeanInhib.setVisible(False)
 		self.labelVarInhib.setVisible(False)
@@ -563,13 +563,13 @@ class NetWindow(QMainWindow, Ui_MainWindow,object):
 		self.dsbLocationInhibWeights.setVisible(True)
 		self.dsbLocationExcWeights.setVisible(True)
 
-	def updateSbNodesToKeep(self):
+	def update_sb_keep_nodes(self):
 		if self.comboBoxSelectGraph.count() != 0:
 			idxCurrent = self.comboBoxSelectGraph.currentIndex()
-			nNodes = self.comboBoxSelectGraph.itemData(idxCurrent).getNodes()
+			nNodes = self.comboBoxSelectGraph.itemData(idxCurrent).num_vertices()
 			self.sbNodesToKeep.setMaximum(nNodes)
 
-	def closeEvent(self,event):
+	def event_close(self,event):
 		# empty self-referencing dictionaries
 		self.dicGraphType = None
 		self.dicEvolType = None

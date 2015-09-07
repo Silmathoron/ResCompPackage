@@ -40,8 +40,6 @@ class GANET:
 		self.lstConnect = []
 		self.batch = []
 		# multiprocessing
-		self.listWGraphs = []
-		listWConnect = []
 		self.lstProcessesGraphGen = []
 		self.lstProcessesEvolProp = []
 		self.bProcKilled = False
@@ -56,7 +54,7 @@ class GANET:
 		self.weightsManager = WeightsManager(self)
 		return self
 
-	def sendLoadConnectSignal(self):
+	def signal_load_connect(self):
 			sender = self.sender()
 			strType = None
 			if sender.objectName() == "pbLoadInputConnect":
@@ -68,11 +66,11 @@ class GANET:
 	def connect_interface(self):
 		if self.gui is not None:
 			# les actions sur la création ou l'analyse de graphes/connectivités
-			QtCore.QObject.connect(self.gui.pbCreateGraph, QtCore.SIGNAL("clicked()"), self.startProcessGraphGen)
-			QtCore.QObject.connect(self.gui.pbCancelGraphGen, QtCore.SIGNAL("clicked()"), self.stopLastProcessGraphGen)
+			QtCore.QObject.connect(self.gui.pbCreateGraph, QtCore.SIGNAL("clicked()"), self.start_graphgen_process)
+			QtCore.QObject.connect(self.gui.pbCancelGraphGen, QtCore.SIGNAL("clicked()"), self.stop_graphgen_last_process)
 			QtCore.QObject.connect(self.gui.pbPlotDistrib, QtCore.SIGNAL("clicked()"), self.graphAnalyser.plotDistrib)
 			QtCore.QObject.connect(self.gui.pbPlotEvol, QtCore.SIGNAL("clicked()"), self.graphAnalyser.plotEvolProp)
-			self.gui.pbMeasurements.clicked.connect(self.graphAnalyser.showMeasurements)
+			self.gui.pbMeasurements.clicked.connect(self.graphAnalyser.show_measurements)
 			self.gui.pbPlotDegDistribConnect.clicked.connect(self.resComputer.plotConnectivityDegree)
 			self.gui.pbPlotWeightDistribConnect.clicked.connect(self.resComputer.plotConnectivityWeightDistrib)
 			self.gui.pbCompareDegree.clicked.connect(self.resComputer.compareDegrees)
@@ -83,24 +81,24 @@ class GANET:
 			self.gui.toolButtonSaveFile.clicked.connect(self.fileManager.setNeighbourListFile)
 			self.gui.pbSave.clicked.connect(self.fileManager.saveNeighbourList)
 			self.gui.pbLoad.clicked.connect(self.fileManager.loadGraph)
-			self.gui.pbLoadInputConnect.clicked.connect(self.sendLoadConnectSignal)
-			self.gui.pbLoadReadoutConnect.clicked.connect(self.sendLoadConnectSignal)
+			self.gui.pbLoadInputConnect.clicked.connect(self.signal_load_connect)
+			self.gui.pbLoadReadoutConnect.clicked.connect(self.signal_load_connect)
 			self.gui.pbLoadBatch.clicked.connect(self.fileManager.loadBatch)
 			self.gui.pbSaveConnect.clicked.connect(self.fileManager.saveConnect)
 			self.gui.pbRemove.clicked.connect(self.fileManager.removeData)
 
 	# add graph to the list widget, the comboboxes and activate the buttons
-	def newGraphAdded(self, lstNewGraphs):
+	def new_graph_added(self, lstNewGraphs):
 		for graph in lstNewGraphs:
 			self.lstGraphs.append(graph)
 			strGraphName = graph.get_name()
 			if self.gui.comboBoxSaveNetw.findText(strGraphName) != -1:
 				strGraphName += "_{}".format(len(self.lstGraphs))
-				graph.setName(strGraphName)
-			QtGui.QListWidgetItem(strGraphName,self.listWGraphs)
-			idxItem = self.listWGraphs.count() - 1
-			self.listWGraphs.item(idxItem).setText(unicode(strGraphName))
-			self.listWGraphs.item(idxItem).setData(1,graph)
+				graph.set_name(strGraphName)
+			QtGui.QListWidgetItem(strGraphName,self.gui.listWGraphs)
+			idxItem = self.gui.listWGraphs.count() - 1
+			self.gui.listWGraphs.item(idxItem).setText(unicode(strGraphName))
+			self.gui.listWGraphs.item(idxItem).setData(1,graph)
 			self.gui.comboBoxSaveNetw.addItem(strGraphName,graph)
 			self.gui.comboBoxSelectGraph.addItem(strGraphName,graph)
 			self.gui.comboBoxReservoir.addItem(strGraphName,graph)
@@ -113,13 +111,13 @@ class GANET:
 				self.gui.pbCompDegBetw.setEnabled(True)
 
 	# add to the list widget, the combobox and activate the buttons
-	def newConnectivityAdded(self):
+	def new_connectivity_added(self):
 		connectivity = self.lstConnect[-1]
 		strConnectName = connectivity.get_name()
-		QtGui.QListWidgetItem(strConnectName,self.listWConnect)
-		idxItem = self.listWConnect.count() - 1
-		self.listWConnect.item(idxItem).setText(unicode(strConnectName))
-		self.listWConnect.item(idxItem).setData(1,connectivity)
+		QtGui.QListWidgetItem(strConnectName,selfgui.listWConnect)
+		idxItem = selfgui.listWConnect.count() - 1
+		selfgui.listWConnect.item(idxItem).setText(unicode(strConnectName))
+		selfgui.listWConnect.item(idxItem).setData(1,connectivity)
 		self.gui.comboBoxSelectConnect.addItem(strConnectName,connectivity)
 		self.gui.pbPlotDegDistribConnect.setEnabled(True)
 		self.gui.pbPlotWeightDistribConnect.setEnabled(True)
@@ -128,12 +126,12 @@ class GANET:
 			self.gui.pbCompareDegree.setEnabled(True)
 			self.gui.pbCompDegBetw.setEnabled(True)
 
-	def initProgressBar(self):
+	def init_progressbar(self):
 		self.gui.progBarEvolProp.setRange(0, 100)
 		self.gui.progBarEvolProp.setVisible(True)
 		self.gui.progBarEvolProp.setValue(0.001)
 
-	def startProcessGraphGen(self):
+	def start_graphgen_process(self):
 		# remove process that terminated
 		lstToRemove = []
 		for i,lstProc in enumerate(self.lstProcessesGraphGen):
@@ -149,10 +147,10 @@ class GANET:
 			self.lstProcessesGraphGen.pop(i)
 		# start new one
 		self.gui.pbCancelGraphGen.setEnabled(True)
-		t = threading.Thread(target=self.graphGenerator.generateGraph, args=())
+		t = threading.Thread(target=self.graphGenerator.generate_graph, args=())
 		t.start()
 
-	def stopLastProcessGraphGen(self):
+	def stop_graphgen_last_process(self):
 		if self.lstProcessesGraphGen:
 			self.bProcKilled = True
 			lstProc = self.lstProcessesGraphGen.pop()

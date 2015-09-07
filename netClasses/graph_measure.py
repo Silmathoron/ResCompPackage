@@ -23,9 +23,9 @@ from graph_tool.spectral import *
 #------------------------
 
 def degree_list(gtGraph, strType, bWeights=True):
-	degPropMap = gtGraph.degree_property_map(strDegType)
+	degPropMap = gtGraph.degree_property_map(strType)
 	if "weight" in gtGraph.edge_properties.keys() and bWeights:
-		degPropMap = gtGraph.degree_property_map(strDegType, gtGraph.edge_properties["weight"])
+		degPropMap = gtGraph.degree_property_map(strType, gtGraph.edge_properties["weight"])
 	return degPropMap.a
 
 def betweenness_list(gtGraph, bWeights=True):

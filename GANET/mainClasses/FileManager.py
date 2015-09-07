@@ -5,14 +5,17 @@
 
 import numpy as np
 from graph_tool.stats import remove_self_loops
-import os, sys, gc
+import os, sys
 
 from PySide import QtCore
 from PySide.QtGui import QFileDialog
 
-from GraphClass import GraphClass
-from InputConnect import InputConnect
 
+
+#
+#---
+# File management class
+#--------------------------
 
 class FileManager:
 	def __init__(self,parent):
@@ -21,9 +24,9 @@ class FileManager:
 		lstPaths = ["data","data/graphs","data/NeighbourList"]
 		for path in lstPaths:
 			try: 
-				os.makedirs(path)
+				os.makedirs(sys.path[0]+'/'+path)
 			except OSError:
-				if not os.path.isdir(path):
+				if not os.path.isdir(sys.path[0]+'/'+path):
 					raise
 
 
@@ -32,7 +35,7 @@ class FileManager:
 	#--------#
 	
 	def dialogFileName(self,strAction):
-		strFileName = QFileDialog.getOpenFileName(self.parent, self.parent.tr(strAction), QtCore.QDir.currentPath())[0]
+		strFileName = QFileDialog.getOpenFileName(self.parent.gui, self.parent.gui.tr(strAction), QtCore.QDir.currentPath())[0]
 		return strFileName
 
 
@@ -42,30 +45,30 @@ class FileManager:
 
 	def setNeighbourListFile(self):
 		fileName = self.dialogFileName("Save graph")
-		self.parent.lineEditFileName.setText(fileName)
+		self.parent.gui.lineEditFileName.setText(fileName)
 
 	def saveNeighbourList(self, graph=None):
 		if graph == None:
-			graph = self.parent.comboBoxSaveNetw.itemData(self.parent.comboBoxSaveNetw.currentIndex())
-		nNodes = graph.getGraph().num_vertices()
+			graph = self.parent.gui.comboBoxSaveNetw.itemData(self.parent.gui.comboBoxSaveNetw.currentIndex())
+		nNodes = graph.get_graph().num_vertices()
 		strList = ""
 		dicProp = graph.getDicProp()
 		for strName, value in dicProp.items():
 			strList += "# {} {}\n".format(strName,value)
-		for v1 in graph.getGraph().vertices():
-			strList += "{}".format(graph.getGraph().vertex_index[v1])
+		for v1 in graph.get_graph().vertices():
+			strList += "{}".format(graph.get_graph().vertex_index[v1])
 			for e in v1.out_edges():
-				rWeight = graph.getGraph().edge_properties["type"][e]
-				if "weight" in graph.getGraph().edge_properties.keys():
+				rWeight = graph.get_graph().edge_properties["type"][e]
+				if "weight" in graph.get_graph().edge_properties.keys():
 					# on multiplie les poids du graphe pour avoir les arcs négatifs
-					rWeight *= graph.getGraph().edge_properties["weight"][e]
-				strList += " {};{}".format(graph.getGraph().vertex_index[e.target()],rWeight)
+					rWeight *= graph.get_graph().edge_properties["weight"][e]
+				strList += " {};{}".format(graph.get_graph().vertex_index[e.target()],rWeight)
 			strList += "\n"
 		strName = ""
-		if self.parent.lineEditFileName.isEnabled():
-			strName = self.parent.lineEditFileName.text()
+		if self.parent.gui.lineEditFileName.isEnabled():
+			strName = self.parent.gui.lineEditFileName.text()
 		if strName == "":
-			strName = "data/NeighbourList/" + graph.getName()
+			strName = "data/NeighbourList/" + graph.get_name()
 		with open(strName,"w") as fileNeighbourList:
 			fileNeighbourList.write(strList)
 
@@ -117,8 +120,7 @@ class FileManager:
 			dicProp["Edges"] = nNodes*(nNodes-1)
 			dicProp["Density"] = (nNodes-1)/float(nNodes)
 			dicProp["Name"] = "Graph_{}".format(len(self.parent.lstGraphs))
-		graph.setDicProp(dicProp)
-		graph.getGraph().add_vertex(dicProp["Nodes"])
+		graph.get_graph().add_vertex(dicProp["Nodes"])
 		lstEdges = np.zeros((2,dicProp["Edges"]))
 		lstWeights = np.zeros(dicProp["Edges"])
 		# load graph
@@ -139,25 +141,27 @@ class FileManager:
 				else:
 					lstWeights[idxEdge] = float(strLine[idxEndVertNumber+1:idxNextSpace])
 				idxEdge += 1
-		graph.getGraph().add_edge_list(np.transpose(lstEdges.astype(int)))
+		graph.get_graph().add_edge_list(np.transpose(lstEdges.astype(int)))
 		# add the edges' properties
 		lstTypes = np.sign(lstWeights)
 		lstWeights = np.absolute(lstWeights)
-		epropType = graph.getGraph().new_edge_property("int",lstTypes)
-		graph.getGraph().edge_properties["type"] = epropType
+		epropType = graph.get_graph().new_edge_property("int",lstTypes)
+		graph.get_graph().edge_properties["type"] = epropType
 		try:
 			if dicProp["Weighted"]:
-				epropWeights = graph.getGraph().new_edge_property("double",lstWeights)
-				graph.getGraph().edge_properties["weight"] = epropWeights
+				epropWeights = graph.get_graph().new_edge_property("double",lstWeights)
+				graph.get_graph().edge_properties["weight"] = epropWeights
 		except:
 			if np.ma.allequal(np.trunc(lstWeights), lstWeights):
 				graph.setProp("Weighted",False)
 			else:
 				graph.setProp("Weighted",True)
-				epropWeights = graph.getGraph().new_edge_property("double",lstWeights)
-				graph.getGraph().edge_properties["weight"] = epropWeights
+				epropWeights = graph.get_graph().new_edge_property("double",lstWeights)
+				graph.get_graph().edge_properties["weight"] = epropWeights
 		# put the graph inside the list and update comboBox
-		remove_self_loops(graph.getGraph())
+		remove_self_loops(graph.get_graph())
+		graph.update_prop()
+		self.parent.new_graph_added(graph,)
 		return graph
 
 	#----------------------#
@@ -220,16 +224,16 @@ class FileManager:
 		fileName = ""
 		currentConnect = connectivity
 		if currentConnect == None:
-			idxCurrent = self.parent.comboBoxSelectConnect.currentIndex()
-			currentConnect = self.parent.comboBoxSelectConnect.itemData(idxCurrent)
-		if self.parent.checkBoxAutoNameConnect.isChecked():
-			fileName = "data/NeighbourList/{}".format(currentConnect.getName(),self.parent.comboBoxConnectBaseReservoir.currentText())
+			idxCurrent = self.parent.gui.comboBoxSelectConnect.currentIndex()
+			currentConnect = self.parent.gui.comboBoxSelectConnect.itemData(idxCurrent)
+		if self.parent.gui.checkBoxAutoNameConnect.isChecked():
+			fileName = "data/NeighbourList/{}".format(currentConnect.getName(),self.parent.gui.comboBoxConnectBaseReservoir.currentText())
 		else:
-			fileName = self.parent.fileManager.dialogFileName("Save connectivity")
+			fileName = self.dialogFileName("Save connectivity")
 		if fileName != "":
 			#connectivity.savetxt(fileName)
-			strHeader = "# InhibFrac {}\n".format(self.parent.dsbFracInhibConnect.value())
-			strHeader += "# Density {}\n".format(self.parent.dsbConnectivityDensity.value())
+			strHeader = "# InhibFrac {}\n".format(self.parent.gui.dsbFracInhibConnect.value())
+			strHeader += "# Density {}\n".format(self.parent.gui.dsbConnectivityDensity.value())
 			with open(fileName,"w") as fileConnect:
 				fileConnect.write(strHeader)
 				fileConnect.write(currentConnect.getListNeighbours())
@@ -251,20 +255,20 @@ class FileManager:
 	#----------#
 
 	def removeData(self):
-		lstComboBoxesGraph = [self.parent.comboBoxSaveNetw,self.parent.comboBoxSelectGraph,self.parent.comboBoxReservoir,self.parent.comboBoxConnectBaseReservoir]
-		for item in self.parent.listWGraphs.selectedItems():
+		lstComboBoxesGraph = [self.parent.gui.comboBoxSaveNetw,self.parent.gui.comboBoxSelectGraph,self.parent.gui.comboBoxReservoir,self.parent.gui.comboBoxConnectBaseReservoir]
+		for item in self.parent.gui.listWGraphs.selectedItems():
 			graph = item.data(1)
-			self.parent.listWGraphs.takeItem(self.parent.listWGraphs.row(item))
+			self.parent.gui.listWGraphs.takeItem(self.parent.gui.listWGraphs.row(item))
 			for comboBox in lstComboBoxesGraph:
-				idxItem = comboBox.findText(graph.getName())
+				idxItem = comboBox.findText(graph.get_name())
 				comboBox.removeItem(idxItem)
 			idxGraph = self.parent.lstGraphs.index(graph)
 			del self.parent.lstGraphs[idxGraph]
-		for item in self.parent.listWConnect.selectedItems():
+		for item in self.parent.gui.listWConnect.selectedItems():
 			connectivity = item.data(1)
-			self.parent.listWConnect.takeItem(self.parent.listWConnect.row(item))
-			idxItem = self.parent.comboBoxSelectConnect.findText(connectivity.get_name())
-			self.parent.comboBoxSelectConnect.removeItem(idxItem)
+			self.parent.gui.listWConnect.takeItem(self.parent.gui.listWConnect.row(item))
+			idxItem = self.parent.gui.comboBoxSelectConnect.findText(connectivity.get_name())
+			self.parent.gui.comboBoxSelectConnect.removeItem(idxItem)
 			idxConnect = self.parent.lstConnect.index(connectivity)
 			del self.parent.lstConnect[idxConnect]
 		

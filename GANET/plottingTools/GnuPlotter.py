@@ -14,7 +14,7 @@ class GnuPlotter:
 		strMirror = ""
 		strYLog = ""
 		strYAdd0 = "add ('0' 0)"
-		if self.parent.checkBoxLogBetwY.isChecked():
+		if self.parent.gui.checkBoxLogBetwY.isChecked():
 			strYLog = "set logscale y\n"
 			strYAdd0 = ""
 		strTerm = "epslatex color dashed\n"
@@ -22,30 +22,30 @@ class GnuPlotter:
 		strFormatX = ""
 		strPtSize= "1.5"
 		strOffset = "offset 0,1 "
-		if self.parent.rbPlotPDF.isChecked():
+		if self.parent.gui.rbPlotPDF.isChecked():
 			strTerm = "pdf transparent enhanced dashed font 'FreeSerif'\n"
 			strOutput = "pdf"
 			strPtSize = "0.5"
 			strOffset = ""
 		strXLog = ""
 		strXAdd0 = "add ('0' 0) "
-		if self.parent.checkBoxLogBetwX.isChecked():
+		if self.parent.gui.checkBoxLogBetwX.isChecked():
 			strXLog = "set logscale x\n"
 			strXAdd0 = ""
 			strFormatX = '$%2.1t \\cdot 10^{%L}$'
-			if self.parent.rbPlotPDF.isChecked():
+			if self.parent.gui.rbPlotPDF.isChecked():
 				strFormatX = "\"%2.1t {/Symbol \\327}10^{%L}\""
 		strData2 = ""
 		if len(lstArgs) == 2:
 			strMirror = "nomirror "
 			strY2Log = ""
 			strY2Add0 = "add ('0' 0)"
-			if self.parent.checkBoxLogBetwY.isChecked():
+			if self.parent.gui.checkBoxLogBetwY.isChecked():
 				strY2Log = "set logscale y2\n"
 				strY2Add0 = ""
 			strX2Log = ""
 			strX2Add0 = "add ('0' 0) "
-			if self.parent.checkBoxLogBetwX.isChecked():
+			if self.parent.gui.checkBoxLogBetwX.isChecked():
 				strX2Log = "set logscale x2\n"
 				strX2Add0 = ""
 			strData2 ="\n\
@@ -59,10 +59,10 @@ set format x2 {5}\n\
 set my2tics 5\n\
 set mx2tics 5\n".format(lstArgs[1],strY2Log,strY2Add0,strX2Log,strX2Add0,strFormatX)
 		strKey = "off"
-		if self.parent.gbSetLegendDistrib.isChecked():
-			strKey ="{} {}".format(self.parent.cbLegendHorizAlign.currentText(),self.parent.cbLegendVertAlign.currentText())
+		if self.parent.gui.gbSetLegendDistrib.isChecked():
+			strKey ="{} {}".format(self.parent.gui.cbLegendHorizAlign.currentText(),self.parent.gui.cbLegendVertAlign.currentText())
 		# generate the GP file
-		strGP = "load 'data/SpectrPerso.plt'\n\
+		strGP = "load 'plottingTools/SpectrPerso.plt'\n\
 set grid linestyle 18 lc rgb '#cccccc'\n\
 \n\
 set ylabel rotate '{0}'\n\
@@ -87,12 +87,12 @@ plot ".format(strData1,strYLog,strMirror,strYAdd0,strOffset,strXLog,strXAdd0,str
 	def completeGpStrBetw(self,strBetwType,strGraphName,idxIter=0,idxCurrent=0,strAddInfo=""):
 		strStyle = ""
 		strPts = ""
-		if self.parent.rbPoints.isChecked():
+		if self.parent.gui.rbPoints.isChecked():
 			strStyle = "points"
 			strPts = "pt 7 "
-		if self.parent.rbLines.isChecked():
+		if self.parent.gui.rbLines.isChecked():
 			strStyle = "lines"
-		if self.parent.rbLinespoints.isChecked():
+		if self.parent.gui.rbLinespoints.isChecked():
 			strStyle = "linespoints"
 			strPts = "pt 7 "
 		if strBetwType == "Nodes":
@@ -107,48 +107,48 @@ plot ".format(strData1,strYLog,strMirror,strYAdd0,strOffset,strXLog,strXAdd0,str
 		lstLabelsY1 = []
 		lstLabelsY2 = []
 		lstLogscale = []
-		if self.parent.gbAssort.isEnabled():
-			if self.parent.rbAssortY1.isChecked():
-				lstLabelsY1.append(self.parent.gbAssort.title())
+		if self.parent.gui.gbAssort.isEnabled():
+			if self.parent.gui.rbAssortY1.isChecked():
+				lstLabelsY1.append(self.parent.gui.gbAssort.title())
 			else:
-				lstLabelsY2.append(self.parent.gbAssort.title())
-			if self.parent.checkBoxLogAssort.isChecked():
-				lstLogscale.append(self.parent.gbAssort.title())
-		if self.parent.gbClustering.isEnabled():
-			if self.parent.rbClusteringY1.isChecked():
-				lstLabelsY1.append(self.parent.gbClustering.title())
+				lstLabelsY2.append(self.parent.gui.gbAssort.title())
+			if self.parent.gui.checkBoxLogAssort.isChecked():
+				lstLogscale.append(self.parent.gui.gbAssort.title())
+		if self.parent.gui.gbClustering.isEnabled():
+			if self.parent.gui.rbClusteringY1.isChecked():
+				lstLabelsY1.append(self.parent.gui.gbClustering.title())
 			else:
-				lstLabelsY2.append(self.parent.gbClustering.title())
-			if self.parent.checkBoxLogCluster.isChecked():
-				lstLogscale.append(self.parent.gbClustering.title())
-		if self.parent.gbReciprocity.isEnabled():
-			if self.parent.rbRecipY1.isChecked():
-				lstLabelsY1.append(self.parent.gbReciprocity.title())
+				lstLabelsY2.append(self.parent.gui.gbClustering.title())
+			if self.parent.gui.checkBoxLogCluster.isChecked():
+				lstLogscale.append(self.parent.gui.gbClustering.title())
+		if self.parent.gui.gbReciprocity.isEnabled():
+			if self.parent.gui.rbRecipY1.isChecked():
+				lstLabelsY1.append(self.parent.gui.gbReciprocity.title())
 			else:
-				lstLabelsY2.append(self.parent.gbReciprocity.title())
-			if self.parent.checkBoxLogRecip.isChecked():
-				lstLogscale.append(self.parent.gbReciprocity.title())
-		if self.parent.gbConnectComp.isEnabled():
-			if self.parent.rbConnectY1.isChecked():
-				lstLabelsY1.append(self.parent.gbConnectComp.title())
+				lstLabelsY2.append(self.parent.gui.gbReciprocity.title())
+			if self.parent.gui.checkBoxLogRecip.isChecked():
+				lstLogscale.append(self.parent.gui.gbReciprocity.title())
+		if self.parent.gui.gbConnectComp.isEnabled():
+			if self.parent.gui.rbConnectY1.isChecked():
+				lstLabelsY1.append(self.parent.gui.gbConnectComp.title())
 			else:
-				lstLabelsY2.append(self.parent.gbConnectComp.title())
-			if self.parent.checkBoxLogCC.isChecked():
-				lstLogscale.append(self.parent.gbConnectComp.title())
-		if self.parent.gbDiameter.isEnabled():
-			if self.parent.rbDiamY1.isChecked():
-				lstLabelsY1.append(self.parent.gbDiameter.title())
+				lstLabelsY2.append(self.parent.gui.gbConnectComp.title())
+			if self.parent.gui.checkBoxLogCC.isChecked():
+				lstLogscale.append(self.parent.gui.gbConnectComp.title())
+		if self.parent.gui.gbDiameter.isEnabled():
+			if self.parent.gui.rbDiamY1.isChecked():
+				lstLabelsY1.append(self.parent.gui.gbDiameter.title())
 			else:
-				lstLabelsY2.append(self.parent.gbDiameter.title())
-			if self.parent.checkBoxLogDiam.isChecked():
-				lstLogscale.append(self.parent.gbDiameter.title())
-		if self.parent.gbSpectrum.isEnabled():
-			if self.parent.rbSpectrY1.isChecked():
-				lstLabelsY1.append(self.parent.gbSpectrum.title())
+				lstLabelsY2.append(self.parent.gui.gbDiameter.title())
+			if self.parent.gui.checkBoxLogDiam.isChecked():
+				lstLogscale.append(self.parent.gui.gbDiameter.title())
+		if self.parent.gui.gbSpectrum.isEnabled():
+			if self.parent.gui.rbSpectrY1.isChecked():
+				lstLabelsY1.append(self.parent.gui.gbSpectrum.title())
 			else:
-				lstLabelsY2.append(self.parent.gbSpectrum.title())
-			if self.parent.checkBoxLogSpectr.isChecked():
-				lstLogscale.append(self.parent.gbSpectrum.title())
+				lstLabelsY2.append(self.parent.gui.gbSpectrum.title())
+			if self.parent.gui.checkBoxLogSpectr.isChecked():
+				lstLogscale.append(self.parent.gui.gbSpectrum.title())
 		# s'il y a des logscale, on les plot tous sur Y2
 		bLogScale = False
 		for strLabel in lstLogscale:
@@ -192,17 +192,17 @@ set mx2tics 5\n".format(strLabelY2,strY2Log)
 		strFormatX = "'$%2.1t \\cdot 10^{%L}$'"
 		strPtSize= "1.5"
 		strOffset = "offset 0,1 "
-		if self.parent.rbPlotPDF.isChecked():
+		if self.parent.gui.rbPlotPDF.isChecked():
 			strTerm = "pdf transparent enhanced dashed font 'FreeSerif'\n"
 			strOutput = "pdf"
 			strFormatX = "\"%2.1t {/Symbol \\327}10^{%L}\""
 			strPtSize = "0.5"
 			strOffset = ""
 		strKey = "off"
-		if self.parent.gbSetLegendDistrib.isChecked():
-			strKey ="{} {}".format(self.parent.cbLegendHorizAlign.currentText(),self.parent.cbLegendVertAlign.currentText())
+		if self.parent.gui.gbSetLegendDistrib.isChecked():
+			strKey ="{} {}".format(self.parent.gui.cbLegendHorizAlign.currentText(),self.parent.gui.cbLegendVertAlign.currentText())
 		# create the .gp file
-		strGP = "load 'data/Set1.plt'\n\
+		strGP = "load 'plottingTools/Set1.plt'\n\
 set ylabel rotate '{0}'\n\
 set xlabel {1}'{2}'\n\
 set ytics {3}\n\
@@ -221,12 +221,12 @@ plot  ".format(strLabelY1,strOffset,strVarQuantity,strYMirror,strAxisY2,strKey,s
 	def completeGpStrEvol(self,strFile,lstLabelsY2,col,strMeas):
 		strStyle = ""
 		strPts = ""
-		if self.parent.rbPoints.isChecked():
+		if self.parent.gui.rbPoints.isChecked():
 			strStyle = "points"
 			strPts = "pt {}".format(2*col+5)
-		if self.parent.rbLines.isChecked():
+		if self.parent.gui.rbLines.isChecked():
 			strStyle = "lines"
-		if self.parent.rbLinespoints.isChecked():
+		if self.parent.gui.rbLinespoints.isChecked():
 			strStyle = "linespoints"
 			strPts = "pt {}".format(2*col+5)
 		nNumY = 1
@@ -238,11 +238,11 @@ plot  ".format(strLabelY1,strOffset,strVarQuantity,strYMirror,strAxisY2,strKey,s
 	def genGpStrDeg(self,strFileName,lstArgs):
 		# get the required informations
 		strYLog = ""
-		if self.parent.checkBoxLogDegY.isChecked():
+		if self.parent.gui.checkBoxLogDegY.isChecked():
 			strYLog = "set logscale y\n"
 		strXLog = ""
 		bLogDeg = False
-		if self.parent.checkBoxLogDegX.isChecked():
+		if self.parent.gui.checkBoxLogDegX.isChecked():
 			strXLog = "set logscale x\n"
 			bLogDeg = True
 		strTerm = "epslatex color dashed\n"
@@ -250,17 +250,17 @@ plot  ".format(strLabelY1,strOffset,strVarQuantity,strYMirror,strAxisY2,strKey,s
 		strFormatX = "'$%2.1t \\cdot 10^{%L}$'"
 		strPtSize= "1.5"
 		strOffset = "offset 0,1 "
-		if self.parent.rbPlotPDF.isChecked():
+		if self.parent.gui.rbPlotPDF.isChecked():
 			strTerm = "pdf transparent enhanced dashed font 'FreeSerif'\n"
 			strOutput = "pdf"
 			strFormatX = "\"%2.1t {/Symbol \\327}10^{%L}\""
 			strPtSize = "0.5"
 			strOffset = ""
 		strKey = "off"
-		if self.parent.gbSetLegendDistrib.isChecked():
-			strKey ="{} {}".format(self.parent.cbLegendHorizAlign.currentText(),self.parent.cbLegendVertAlign.currentText())
+		if self.parent.gui.gbSetLegendDistrib.isChecked():
+			strKey ="{} {}".format(self.parent.gui.cbLegendHorizAlign.currentText(),self.parent.gui.cbLegendVertAlign.currentText())
 		# build the .gp file
-		strGP = "load 'data/SpectrPerso.plt'\n\
+		strGP = "load 'plottingTools/SpectrPerso.plt'\n\
 set ylabel rotate 'Nodes'\n\
 set xlabel {7}'Degree'\n\
 set mytics 5\n\
@@ -279,15 +279,15 @@ plot ".format(strYLog,strXLog,strKey,strTerm,strFileName,strOutput,strPtSize,str
 	def completeGpStrDeg(self,strDegType,strFileName,idxIter=0,idxCurrent=0,strAddInfo=""):
 		strStyle = ""
 		strPts = ""
-		if self.parent.rbPoints.isChecked():
+		if self.parent.gui.rbPoints.isChecked():
 			strStyle = "points"
-		if self.parent.rbLines.isChecked():
+		if self.parent.gui.rbLines.isChecked():
 			strStyle = "lines"
-		if self.parent.rbLinespoints.isChecked():
+		if self.parent.gui.rbLinespoints.isChecked():
 			strStyle = "linespoints"
-		if self.parent.rbPoints.isChecked():
+		if self.parent.gui.rbPoints.isChecked():
 				strPts = "pt {} ".format(7-idxCurrent)
-		if self.parent.rbLinespoints.isChecked():
+		if self.parent.gui.rbLinespoints.isChecked():
 			strPts = "pt {} ".format(7-idxCurrent)
 		strFileHistoName = "data/{0}_{1}_{2}".format(strFileName,strAddInfo,strDegType)
 		strGP = "'{0}' using 1:2 with {1} ls {2} {3}title '{4}{5}'".format(strFileHistoName,strStyle,idxIter+idxCurrent+1,strPts,strDegType," - " + strAddInfo)
@@ -296,30 +296,30 @@ plot ".format(strYLog,strXLog,strKey,strTerm,strFileName,strOutput,strPtSize,str
 	def genGpStrBetwVsWeight(self,strFileName):
 		strYLog = ""
 		strXLog = ""
-		if self.parent.checkBoxLogY.isChecked():
+		if self.parent.gui.checkBoxLogY.isChecked():
 			strYLog = "set logscale y\n"
-		if self.parent.checkBoxLogX.isChecked():
+		if self.parent.gui.checkBoxLogX.isChecked():
 			strXLog = "set logscale x\n"
 		strTerm = "epslatex color dashed\n"
 		strOutput = "tex"
 		strFormatX = ""
 		strPtSize= "1.5"
 		strOffset = "offset 0,1 "
-		if self.parent.rbPlotPDF.isChecked():
+		if self.parent.gui.rbPlotPDF.isChecked():
 			strTerm = "pdf transparent enhanced dashed font 'FreeSerif'\n"
 			strOutput = "pdf"
 			strPtSize = "0.5"
 			strOffset = ""
 		strPts = ""
-		if self.parent.rbPoints.isChecked():
+		if self.parent.gui.rbPoints.isChecked():
 			strStyle = "points"
 			strPts = "pt 7"
-		if self.parent.rbLines.isChecked():
+		if self.parent.gui.rbLines.isChecked():
 			strStyle = "lines"
-		if self.parent.rbLinespoints.isChecked():
+		if self.parent.gui.rbLinespoints.isChecked():
 			strStyle = "linespoints"
 			strPts = "pt 7"
-			strGP = "load 'data/Set1.plt'\n\
+			strGP = "load 'plottingTools/Set1.plt'\n\
 set grid linestyle 18 lc rgb '#cccccc'\n\
 \n\
 set ylabel rotate 'Betweenness'\n\
