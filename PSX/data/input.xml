@@ -1,0 +1,29 @@
+<input>
+	<header>
+		<string name="type">separation</string>
+		<string name="networks">data/networks.xml</string>
+		<int name="averages">10</int>
+		<int name="IODim">13</int>
+	</header>
+
+	<parameters>
+		<float name="h">
+			<start>0.015</start>
+			<stop>0.06</stop>
+			<step>0.005</step>
+		</float>
+		<float name="alpha">
+			<start>0.3</start>
+			<stop>2</stop>
+			<step>0.05</step>
+		</float>
+		<float name="beta">1</float>
+		<float name="g">10</float>
+		<float name="theta">1.15</float>
+	</parameters>
+
+	<simulation>
+		<string name="stimulus_train_base">divergent.txt</string>
+		<string name="stimulus_test_base">divergent.txt</string>
+	</simulation>
+</input>

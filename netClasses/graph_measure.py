@@ -3,6 +3,7 @@
 
 """ Graph measurements on graph_tool.Graph objects """
 
+
 import numpy as np
 import scipy as sp
 import scipy.sparse.linalg as spl
