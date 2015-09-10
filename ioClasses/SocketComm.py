@@ -7,9 +7,6 @@ import socket
 import time
 import sys
 import xml.etree.ElementTree as xmlet
-import threading
-
-from globalParam import *
 
 
 
@@ -65,13 +62,11 @@ class SocketComm:
 		try:
 			self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 			self.socket.settimeout(self.timeout)
-			#~ self.socketProgress = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 		except socket.error as msg:
 			print(msg, "could not open socket.")
 			self.socket = None
 		try:
 			self.socket.connect((self.tcpHost, self.tcpPort))
-			#~ self.socketProgress.bind(("", 42424))
 		except socket.error as msg:
 			self.socket.close()
 			print(msg, "could not open socket.")
@@ -83,6 +78,7 @@ class SocketComm:
 		else:
 			print("Socket connected", self.receive())
 			return True
+		return True
 	
 	@timeoutErr
 	def send_data(self,strData):
@@ -132,8 +128,6 @@ class SocketComm:
 		if command != "PROGRESS":
 			print(command.strip("\r\n"))
 		if command == READY:
-			#~ self.threadUDP = threading.Thread(target=self.recvProg, args=())
-			#~ self.threadUDP.start()
 			self.send_run_start()
 			sys.stdout.write("\rProgress: 0%\r")
 			return True, "Running"

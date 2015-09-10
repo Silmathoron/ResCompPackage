@@ -2,6 +2,7 @@
 	<header>
 		<string name="type">separation</string>
 		<string name="networks">data/networks.xml</string>
+		<string name="context">data/context_sep.xml</string>
 		<int name="averages">10</int>
 		<int name="IODim">13</int>
 	</header>

@@ -7,7 +7,6 @@
 from GraphClass import GraphClass
 from InputConnect import InputConnect
 
-import xml.etree.ElementTree as xmlet
 import numpy as np
 
 
@@ -18,24 +17,11 @@ import numpy as np
 #------------------------
 
 class NetGen:
-	def __init__(self):
+	def __init__(self, strPath, xmlHandler):
 		# xml handler
-		self.xmlHandler = XmlHandler()
+		self.xmlHandler = xmlHandler
 		# parameters
-		self.strPath = PATH_RES_CONNECT
-		self.tplIgnore = ("Distribution", "Input")
-		self.dicTypes = {	"Nodes": int, "Density": float,
-							"Weighted": bool, "InhibFrac": float,
-							"Distribution": str, "MeanExc": float,
-							"MeanInhib": float, "VarExc": float,
-							"VarInhib": float, "Type": str,
-							"AntiCorr": boolFromString, "Edges": int,
-							"Lambda": float, "Rho": int,
-							"InDeg": float, "OutDeg": float,
-							"Reciprocity": float,
-							"Min": float,
-							"Max": float
-						}
+		self.strPath = strPath
 		# network-generation-related
 		self.bGenNetworks = False
 		self.lstGraphs = []
@@ -74,7 +60,7 @@ class NetGen:
 	def generateFromXml(self, xmlRoot):
 		# generate the grahs dictionaries
 		for xmlElt in xmlRoot:
-			dicGenerator = xmlToIterDict(xmlElt,self.dicTypes)
+			dicGenerator = self.xmlHandler.convert_xml_to_dict(xmlElt, True)
 			dicGenerator["Type"] = xmlElt.tag,
 			# test for weight distribution
 			if "Weights" in dicGenerator.keys():

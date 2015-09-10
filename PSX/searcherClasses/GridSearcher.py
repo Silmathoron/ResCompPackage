@@ -4,7 +4,7 @@
 """ GridSearcher class """
 
 
-from NetGenerator import NetGen
+from NetGen import NetGen
 from XmlHandler import XmlHandler
 
 from network_io import mat_to_string
@@ -26,8 +26,9 @@ class GridSearcher:
 		self.comm = comm
 		# process input file
 		self.args = args
-		self.xmlHandler = XmlHandler(args.input)
-		self.numAvg = xmlHandler.get_header_item("averages")
+		self.xmlHandler = XmlHandler()
+		self.xmlHandler.process_input(args.input)
+		self.numAvg = self.xmlHandler.get_header_item("averages")
 		if self.args.path[-1] != "/": self.args.path += "/"
 		# create children
 		self.netGenerator = NetGen(args.path, self.xmlHandler)
@@ -48,7 +49,7 @@ class GridSearcher:
 
 	## generate and send next reservoir/connectivity pair
 	
-	def send_next(self):
+	def send_next_matrices(self):
 		self.reservoir, self.connect = self.netGenerator.next_pair()
 		if reservoir is not None:
 			return self.send_matrices()
@@ -62,7 +63,7 @@ class GridSearcher:
 		lstParam = self.xmlHandler.grid_search_param_list()
 		# generate xml object
 		strNameReservoir, strNameConnect = self.current_names()
-		xmlParamList = self.xmlHandler.gen_param_list(strNameConnect,strNameReservoir, lstParam)
+		xmlParamList = self.xmlHandler.gen_xml_param(strNameConnect,strNameReservoir, lstParam)
 		# send
 		self.comm.send_parameters(xmlParamList)
 
@@ -79,7 +80,7 @@ class GridSearcher:
 				#~ dicResults = {}
 				while bCrunchGraphs:
 					print("--- Run %d ---" % numRuns)
-					bRecvd = self.send_next()
+					bRecvd = self.send_next_matrices()
 					if bRecvd:
 						# save information
 						strNameReservoir, strNameConnect = self.current_names()

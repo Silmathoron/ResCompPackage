@@ -1,0 +1,93 @@
+<?xml version="1.0" ?>
+
+<Application type="Console" name="reservoir application" threads="false">
+	
+	<!-- parameters -->
+	<Variable name="time_window" value="500"/>
+	<Variable name="stimulus_period" value="40"/>
+	<Variable name="train_th" value="0.00000001"/>
+	<Variable name="test_preamble" value="2"/>
+	
+	<Variable name="noise_scale" value="0.0"/>
+	<Variable name="noise_a" value="-1"/>
+	<Variable name="noise_b" value="1"/>
+	<Variable name="save_pca" value="false"/>
+
+	<!-- matrices -->
+	<Process type="Load" subtype="Csr" name="input_matrix" id="@in_id"/>
+	<Process type="Load" subtype="Csr" name="recurrent_matrix" id="@rec_id"/>
+
+	<!-- stimulus -->
+	<Process type="Stimulus" subtype="Corpus" period="@stimulus_period" name="Stimulus" >
+		<Train>
+			<Base type="Text" name="train_base" filename="@stimulus_train_base" separator=" " name_rank="0" />
+			<Swapper type="Randomized" base="train_base" stimulus="Stimulus"/>
+		</Train> 
+		<Test>
+			<Base type="Text" name="test_base" filename="@stimulus_test_base" separator=" "  name_rank="0" />
+			<Swapper type="Fixed" base="test_base" stimulus="Stimulus"/>
+		</Test>
+	</Process>
+
+	<!-- main objects -->
+	<Process type="Group"  name="Input" h="0.1" g="8" size="Stimulus" />
+	<Process type="Group"  name="Reservoir" size="recurrent_matrix" dim="0" h="@h" g="@g" theta="@theta" />	
+	<Process type="Group" name="Output" h="1" g="1.0" theta="0.001" size="Input" />
+
+	<Process type="Weights"  name="Incoming" alpha="1">
+		<Data ref="Stimulus"/>
+		<Data ref="Input"/>
+		<WeightsInitializer type="Identity"/>
+		<Rule type="Fixed"/>
+	</Process>
+	<Process type="Weights"  name="Feedforward" alpha="1" eta="@beta">
+		<Data ref="Input"/>
+		<Data ref="Reservoir"/>
+		<WeightsInitializer type="Copy" name="uniform">
+			<Data ref="input_matrix"/>
+		</WeightsInitializer>
+		<Rule type="Fixed"/>
+	</Process>
+	<Process type="Weights" name="Recurrent" alpha="1" eta="@alpha">
+		<Data ref="Reservoir"/>
+		<Data ref="Reservoir"/> 
+		<WeightsInitializer type="Copy">
+			<Data ref="recurrent_matrix"/>
+		</WeightsInitializer>
+		<Rule type="Fixed"/>
+	</Process>
+	<Process type="Weights"  name="Feedback" alpha="0" eta="@beta">
+		<Data ref="Output"/>
+		<Data ref="Reservoir"/>
+		<WeightsInitializer type="Ref" ref="uniform"/>
+		<Rule type="Fixed"/>
+	</Process>
+	
+	<Process type="Weights" name="Readout" >
+		<Data ref="Reservoir" sink="x"/>
+		<Data ref="Output" sink="x"/>
+		<WeightsInitializer type="Uniform" a="-0.1" b="0.1"/>
+		<Rule type="LMS" epsilon="@eps" name="lms">
+			<Data ref="Input" sink="x"/>
+		</Rule>
+	</Process>
+
+  <!-- training and evaluation -->
+	<Process type="Error" name="error" alpha="0.00000005">
+		<Data ref="Input"/>
+		<Data ref="Output" sink="x"/>
+	</Process>
+	
+	<Actor type="Trainer" name="train" threshold="@train_th" epoch="@train_ep" stimulus="Stimulus" decrease="true">
+		<Data ref="error"/>
+		<Data ref="error" sink="smoothed"/>
+	</Actor>
+	<Actor type="Tester" name="test" preamble="@test_preamble" epoch="@test_ep" stimulus="Stimulus" >
+		<Data ref="error"/>
+	</Actor>
+	<Actor type="Evaluator" name="evaluate" rounds="@eval_rounds" >
+		<Actor type="Ref" ref="train"/>
+		<Actor type="Ref" ref="test"/>
+	</Actor>
+
+</Application>

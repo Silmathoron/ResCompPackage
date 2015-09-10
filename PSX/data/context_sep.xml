@@ -1,0 +1,93 @@
+<?xml version="1.0" ?>
+
+<!-- generic application -->
+<Application type="Window" name="reservoir application" threads="false">
+	<Variable name="time_window" value="500"/>
+
+	<Variable name="stimulus_period" value="40"/>
+	
+	<Process type="Stimulus" subtype="Corpus" period="@stimulus_period" name="Stimulus" >
+		<Train>
+			<Base type="Text" name="train_base" filename="@stimulus_train_base" separator=" " name_rank="0" />
+			<Swapper type="Fixed" base="train_base" stimulus="Stimulus"/>
+		</Train> 
+		<Test>
+			<Base type="Text" name="test_base" filename="@stimulus_test_base" separator=" "  name_rank="0" />
+			<Swapper type="Fixed" base="test_base" stimulus="Stimulus"/>
+		</Test>
+	</Process>
+
+	<Actor name="run epoch" type="Runner" epoch="1" stimulus="Stimulus"/>
+
+
+	<Process type="Load" subtype="Csr" name="input_matrix" id="@in_id"/>
+	<Process type="Load" subtype="Csr" name="recurrent_matrix" id="@rec_id"/>
+	
+	<Process type="Group"  name="Input" h="0.1" g="@g" theta="0.5" size="Stimulus" reset="Stimulus" />
+	<Process type="Group"  name="Reservoir" size="recurrent_matrix" dim="0" h="@h" theta="@theta" g="@g" reset="Stimulus" />
+	
+	<Process type="Weights"  name="Incoming" alpha="1" >
+		<Data ref="Stimulus"/>
+		<Data ref="Input"/>
+		<WeightsInitializer type="Identity"/>
+		<Rule type="Fixed"/>
+	</Process>
+	
+	<Process type="Weights"  name="Feedforward" alpha="@beta" >
+		<Data ref="Input"/>
+		<Data ref="Reservoir"/>
+		<WeightsInitializer type="Copy">
+			<Data ref="input_matrix"/>
+		</WeightsInitializer>
+		<Rule type="Fixed"/>
+	</Process>
+	
+	<Process type="Weights" name="Recurrent" alpha="@alpha">
+		<Data ref="Reservoir"/>
+		<Data ref="Reservoir"/> 
+		<WeightsInitializer type="Copy">
+			<Data ref="recurrent_matrix"/>
+		</WeightsInitializer>
+		<Rule type="Fixed"/>
+	</Process>
+
+		
+	<Process type="Accumulator"  stimulus="Stimulus" sequence="1_seq" name="1_acc" base="train_base">
+		<Data ref="Reservoir"/>
+	</Process>	
+	<Process type="Accumulator"  stimulus="Stimulus" sequence="2_seq" name="2_acc" base="train_base">
+		<Data ref="Reservoir"/>
+	</Process>	
+	<Process type="Accumulator"  stimulus="Stimulus" sequence="3_seq" name="3_acc" base="train_base">
+		<Data ref="Reservoir"/>
+	</Process>	
+	<Process type="Accumulator"  stimulus="Stimulus" sequence="4_seq" name="4_acc" base="train_base">
+		<Data ref="Reservoir"/>
+	</Process>
+	
+	<Process type="Cosine" name="1_2">
+		<Data ref="1_acc"/>
+		<Data ref="2_acc"/>
+	</Process>
+	<Process type="Cosine" name="1_3">
+		<Data ref="1_acc"/>
+		<Data ref="3_acc"/>
+	</Process>
+	<Process type="Cosine" name="1_4">
+		<Data ref="1_acc"/>
+		<Data ref="4_acc"/>
+	</Process>
+	<Process type="Cosine" name="2_3">
+		<Data ref="2_acc"/>
+		<Data ref="3_acc"/>
+	</Process>
+	<Process type="Cosine" name="2_4">
+		<Data ref="2_acc"/>
+		<Data ref="4_acc"/>
+	</Process>
+	<Process type="Cosine" name="3_4">
+		<Data ref="3_acc"/>
+		<Data ref="4_acc"/>
+	</Process>
+
+</Application>

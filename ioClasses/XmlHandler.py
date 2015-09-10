@@ -62,7 +62,7 @@ class XmlHandler:
 		else:
 			return None
 		
-	def gen_param_list(self, input_id, recurrent_id, lstParam):
+	def gen_xml_param(self, input_id, recurrent_id, lstParam):
 		table = xmlet.Element("table") # changed from table
 		header = xmlet.SubElement(table, "header")
 		# generate the column and the lists of param values
@@ -126,6 +126,12 @@ class XmlHandler:
 				return strGenerationType, [ line for line in open(strNetworksFile) ]
 		else:
 			raise AttributeError("No <string name='networks'> element found in <header>")
+
+	def get_string_context(self):
+		strFileContext = self.get_header_item("context")
+		tree = xmlet.parse(strFileContext)
+		root = tree.getroot()
+		return xmlet.tostring(root)
 
 	#------------#
 	# Conversion #
