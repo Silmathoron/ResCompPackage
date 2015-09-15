@@ -10,15 +10,15 @@ sys.path.append('../ioClasses/')
 sys.path.append('../commonTools')
 sys.path.append('../netClasses')
 import argparse
+import multiprocessing
 
-from SocketComm import SocketComm
+from CommPSX import CommPSX
 
 from Metropolis import Metropolis
 from GridSearcher import GridSearcher
 
-__version__ = '0.2'
+__version__ = '1.0'
 
-PATH_RES_CONNECT = "data/"
 
 
 #
@@ -53,16 +53,22 @@ args = parser.parse_args()
 if __name__ == "__main__":
 	# connect to server
 	lstSrvHost = args.server.split(':')
-	comm = SocketComm(lstSrvHost, args.timeout)
-	bConnected = comm.open_socket()
+	comm = CommPSX(lstSrvHost, args.timeout)
+	# set connection and deploy communicator
+	connectionExplorer, connectionComm = multiprocessing.Pipe()
+	comm.connectionClient = connectionComm
+	comm.deploy()
+	# check success
+	connectionExplorer.send([STATUS])
+	bConnected = connectionExplorer.recv()
 
 	if bConnected:
 		print("initiating")
 		# initialize
 		explorer = None
 		if args.exploration == "gridsearch":
-			explorer = GridSearcher(args, comm)
+			explorer = GridSearcher(args, connectionExplorer)
 		else:
-			explorer = Metropolis(args, comm)
+			explorer = Metropolis(args, connectionExplorer)
 		# launch run
 		explorer.run()

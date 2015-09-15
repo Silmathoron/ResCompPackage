@@ -8,6 +8,7 @@ from GraphClass import GraphClass
 from InputConnect import InputConnect
 
 import numpy as np
+from copy import deepcopy
 
 
 
@@ -19,7 +20,7 @@ import numpy as np
 class NetGen:
 	def __init__(self, strPath, xmlHandler):
 		# xml handler
-		self.xmlHandler = xmlHandler
+		self.xmlHandler = deepcopy(xmlHandler)
 		# parameters
 		self.strPath = strPath
 		# network-generation-related

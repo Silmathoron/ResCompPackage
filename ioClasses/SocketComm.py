@@ -5,18 +5,17 @@
 
 import socket
 import time
-import sys
-import xml.etree.ElementTree as xmlet
+import threading
 
 
 
 #
 #---
-# Tools
+# Wrappers
 #------------------------
 
-## wrapper
 def timeoutErr(f):
+	''' socket timeout management '''
 	def wrapper(*args, **kw):
 		try:
 			return f(*args, **kw)
@@ -24,41 +23,83 @@ def timeoutErr(f):
 			print("socket message: {}".format(msg))
 	return wrapper
 
-## Communication
-DATA = "DATA\r\n"
-QUIT = "QUIT\r\n"
-SCENARIO = "SCENARIO\r\n"
-READY = "READY\r\n"
-RUN = "RUN\r\n"
-DONE = "DONE\r\n"
-RESULTS = "RESULTS\r\n"
-MATRIX = "MATRIX\r\n"
-STATS = "STATS\r\n"
-BYE = "BYE\r\n"
-HELLO = "HELLO\r\n"
-PROGRESS = "PROGRESS\r\n"
-	
+def wait_clear_event(event):
+	''' thread event communication management '''
+	def decorator(func):
+		def wrapper(*args, **kw):
+			event.wait()
+			return f(*args, **kw)
+			event.clear()
+		return wrapper
+	return decorator
+
+def wait_clear_set_event(event):
+	''' thread event communication management '''
+	def decorator(func):
+		def wrapper(*args, **kw):
+			event.wait()
+			even.clear()
+			return f(*args, **kw)
+			event.set()
+		return wrapper
+	return decorator
+
 
 #
 #---
 # Socket communicator
 #------------------------
 
-class SocketComm:
+class SocketComm(object):
+	
 	def __init__(self, lstSrvHost, nTimeout):
+		# socket
 		self.socket = None
-		self.socketProgress = None
+		self.timeout = nTimeout
+		self.tcpHost, self.tcpPort = lstSrvHost[0], lstSrvHost[1]
+		# data
 		self.strBuffer = ""
 		self.results = None
 		self.stats = []
-		self.isValid = False
-		self.strLatestResult = ""
-		self.progressCount = 0
 		self.maxProgress = 0
-		self.timeout = nTimeout
-		self.tcpHost, self.tcpPort = lstSrvHost[0], lstSrvHost[1]
+		self.bRunClient = True
+		self.bRunServer = True
+		# threads and processes communication
+		self.connectionClient = None
+		self.threadClient = threading.Thread(target=self.thread_client)
+		self.threadServer = threading.Thread(target=self.thread_server)
+		self.bSuccessDeploy = False
+		self.bContextReceived = False
+		self.eventGo = threading.Event()
+		self.eventCanSend = threading.Event()
+		self.eventCanSend.set()
 
-	def open_socket(self):
+	#---------#
+	# Running #
+	#---------#
+
+	def deploy(self):
+		''' connect then try to receive instructions from client/server '''
+		self.bSuccessDeploy *= self.connect_to_server()
+		self.bSuccessDeploy = self.connect_to_client()
+		self.threadServer.start()
+		self.threadClient.start()
+		
+	def thread_client(self):
+		while self.bRunClient:
+			lstInstructions = self.recv_from_client()
+			self.process_client_instructions(lstInstructions)
+
+	def thread_server(self):
+		while self.bRunServer:
+			command = self.receive()
+			self.process_server_data(command)
+
+	#----------------------#
+	# Initiate connections #
+	#----------------------#
+
+	def connect_to_server(self):
 		try:
 			self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 			self.socket.settimeout(self.timeout)
@@ -79,37 +120,29 @@ class SocketComm:
 			print("Socket connected", self.receive())
 			return True
 		return True
-	
+
+	def connect_to_client(self):
+		if self.connectionClient is not None:
+			return True
+		else:
+			return False
+
+	#---------------------#
+	# Run and communicate #
+	#---------------------#
+
+	@wait_clear_set_event(self.eventCanSend)
 	@timeoutErr
-	def send_data(self,strData):
+	def send_to_server(self,strData):
 		self.socket.sendall(strData)
-		return self.receive()[0]
 	
-	@timeoutErr
-	def send_parameters(self, xmlParam):
-		self.socket.send(DATA)
-		self.maxProgress = float(len(xmlParam)-1)
-		strParam = xmlet.tostring(xmlParam) + "\r\n"
-		self.socket.sendall(strParam)
+	@wait_clear_event(self.eventGo)
+	def send_to_client(self, obj):
+		''' sending information to the client '''
+		self.connectionClient.send(obj)
 
 	@timeoutErr
-	def send_quit(self):
-		timeoutErr(self.socket.send(QUIT))
-		self.socket.close()
-
-	@timeoutErr
-	def send_context(self, strXmlContext):
-		self.socket.send(SCENARIO)
-		# send string size
-		self.socket.send("{}\r\n".format(len(strXmlContext)))
-		self.socket.sendall(strXmlContext + "\r\n")
-
-	@timeoutErr
-	def send_run_start(self):
-		self.socket.send(RUN)
-
-	@timeoutErr
-	def receive(self):
+	def recv_from_server(self):
 		while "\n" not in self.strBuffer:
 			self.strBuffer += self.socket.recv(4096)
 		idxReturn = self.strBuffer.find("\r\n")
@@ -125,53 +158,8 @@ class SocketComm:
 		else:
 			command = self.strBuffer[:idxReturn] + "\r\n"
 			self.strBuffer = self.strBuffer[idxReturn:].lstrip("\r\n")
-		if command != "PROGRESS":
-			print(command.strip("\r\n"))
-		if command == READY:
-			self.send_run_start()
-			sys.stdout.write("\rProgress: 0%\r")
-			return True, "Running"
-		elif command == "PROGRESS":
-			idxEnd = self.strBuffer.find("\r\n")
-			self.progressCount += int(self.strBuffer[:idxEnd])
-			if self.maxProgress - self.progressCount < 0.1:
-				sys.stdout.write("\rProgress: 100%\n")
-				sys.stdout.flush()
-			else:
-				sys.stdout.write("\rProgress: {}%\r".format(int(100*self.progressCount/self.maxProgress)))
-				sys.stdout.flush()
-			self.strBuffer = self.strBuffer[idxEnd:].lstrip("\r\n")
-			return True, "Progressing"
-		elif command == DONE:
-			self.socket.send(RESULTS)
-			return True, "Done"
-		elif command == RESULTS:
-			print("Receiving results")
-			strXmlEnd = "</table>\n"
-			while strXmlEnd not in self.strBuffer:
-				self.strBuffer += self.socket.recv(4096)
-			idxEnd = self.strBuffer.find(strXmlEnd) + len(strXmlEnd)
-			xmlResults = xmlet.fromstring(self.strBuffer[:idxEnd])
-			self.strBuffer = self.strBuffer[idxEnd:].lstrip("\r\n")
-			print("Results received")
-			self.results = xmlResults
-			self.progressCount = 0
-			return False, "Results"
-		elif command == STATS:
-			xmlStats = xmlet.fromstring(self.socket.recv(4096))
-			print("Stats received")
-			self.stats.append(xmlStats)
-			return True, "Stats"
-		elif command == SCENARIO:
-			return True, "Scenario"
-		elif command == MATRIX:
-			return True, "Matrix"
-		elif command == BYE:
-			print("Connection closed by server")
-			return False, "Bye"
-		elif command == HELLO:
-			print("Connection accepted by server")
-			return True, "Hello"
-		else:
-			print("Unrecognized command")
-			return True, "Error"
+		return command, self.strBuffer
+
+	def recv_from_client(self):
+		lstInstructions = self.connectionClient.recv()
+		return lstInstructions
