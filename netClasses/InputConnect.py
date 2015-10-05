@@ -24,7 +24,7 @@ class InputConnect:
 	# Generator #
 	#-----------#
 	
-	def __init__ (self, matrix=[], dicProp={}):
+	def __init__ (self, matrix=[], network=None, dicProp={}):
 		self.__matConnect = matrix
 		self.lstBetweenness = [] # heavy so store it if it's already been computed
 		self.dicProperties= {}
@@ -37,13 +37,27 @@ class InputConnect:
 			self.dicProperties["Type"] = None
 		else:
 			self.dicProperties = dicProp
+			if network is not None:
+				strCorr = dicProp["Type"]
+				bAntiCorr = dicProp["AntiCorr"]
+				self.gen_matrix(dicProp, network, strCorr, bAntiCorr)
+				self.set_name()
 
 	#---------------#
 	# Set functions #
 	#---------------#
 
-	def set_name(self,strName):
-		self.dicProperties["Name"] = strName
+	def set_name(self,name=""):
+		''' set graph name '''
+		if name != "":
+			self.dicProperties["Name"] = name
+		else:
+			strName = self.dicProperties["Type"]
+			tplIgnore = ("Type", "Name")
+			for key,value in self.dicProperties.items():
+				if key not in tplIgnore and (value.__class__ != dict):
+					strName += '_' + key[0] + str(value)
+			self.dicProperties["Name"] = strName
 
 	def set_dimensions(self,dimensions):
 		self.dicProperties["IODim"] = dimensions[0]
@@ -69,7 +83,12 @@ class InputConnect:
 		return self.dicProperties["IODim"], self.dicProperties["ReservoirDim"]
 
 	def get_mat_connect(self):
+		''' return the connectivity matrix in dense format '''
 		return self.__matConnect
+
+	def as_csr(self):
+		''' return a copy of the connectivity matrix in csr format '''
+		return ssp.csr_matrix(self.__matConnect)
 
 	def get_list_neighbours(self):
 		strNeighbours = "#{}\n".format(self.get_dimensions())
@@ -90,21 +109,21 @@ class InputConnect:
 	# Matrix generation #
 	#-------------------#
 
-	def gen_matrix(self, dicProp, graph, strCorr, bAntiCorr=False):
+	def gen_matrix(self, dicProp, network, strCorr, bAntiCorr=False):
 		self.dicProperties.update(dicProp)
 		nConnectPerInput = int(np.floor(self.dicProperties["ReservoirDim"] * self.dicProperties["Density"]))
 		self.__matConnect = np.zeros((self.dicProperties["IODim"],self.dicProperties["ReservoirDim"]))
 		# chose to which nodes each input neuron will connect
-		matTargetNeurons = self.target_neurons(nConnectPerInput,graph,strCorr,bAntiCorr).astype(int)
+		matTargetNeurons = self.target_neurons(nConnectPerInput,network,strCorr,bAntiCorr).astype(int)
 		# assign the weights based on the chosen weight rule
-		self.assign_weights(graph,matTargetNeurons)
+		self.assign_weights(network,matTargetNeurons)
 
-	def target_neurons(self,nConnectPerInput,graph,strCorr,bAntiCorr=False):
+	def target_neurons(self,nConnectPerInput,network,strCorr,bAntiCorr=False):
 		numInput = self.dicProperties["IODim"]
 		numNodesReservoir = self.dicProperties["ReservoirDim"]
 		matTargetNeurons = np.zeros((numInput,nConnectPerInput))
 		if strCorr == "Betweenness":
-			self.lstBetweenness = betweenness_list(graph)[0].a #get edge betweenness array
+			self.lstBetweenness = betweenness_list(network)[0].a #get edge betweenness array
 			lstSortedNodes = np.argsort(self.lstBetweenness)
 			if not bAntiCorr:
 				lstSortedNodes = lstSortedNodes[::-1]
@@ -115,7 +134,7 @@ class InputConnect:
 			# get the degree type
 			idxDash = strCorr.find("-")
 			strDegType = strCorr[:idxDash].lower()
-			lstDegrees = degree_list(graph,strDegType)
+			lstDegrees = degree_list(network,strDegType)
 			# sort the nodes by their importance
 			lstSortedNodes = np.argsort(lstDegrees)
 			if not bAntiCorr:
@@ -127,7 +146,7 @@ class InputConnect:
 			matTargetNeurons = np.random.randint(0,numNodesReservoir,(numInput,nConnectPerInput))
 		return matTargetNeurons.astype(int)
 
-	def assign_weights(self,graph,matTargetNeurons):
+	def assign_weights(self,network,matTargetNeurons):
 		numInput = self.dicProperties["IODim"]
 		numNodesReservoir = self.dicProperties["ReservoirDim"]
 		numInhib = numInput*numNodesReservoir*self.dicProperties["InhibFrac"]
@@ -135,7 +154,7 @@ class InputConnect:
 		numInhibPerRow = int(np.floor(nRowLength*self.dicProperties["InhibFrac"]))
 		if self.dicProperties["Distribution"] == "Betweenness":
 			if self.lstBetweenness == []:
-				self.lstBetweenness = betwCentrality(graph)[0].a
+				self.lstBetweenness = betwCentrality(network)[0].a
 			rMaxBetw = self.lstBetweenness.max()
 			rMinBetw = self.lstBetweenness.min()
 			rMaxWeight = self.dicProperties["Max"]
@@ -165,5 +184,5 @@ class InputConnect:
 	#------------#
 
 	def __del__(self):
-		Connectivity.numConnectivities -= 1
+		InputConnect.numConnectivities -= 1
 		print('Connectivity died')

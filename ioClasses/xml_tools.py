@@ -59,33 +59,33 @@ def dict_to_xml(dico, root = None):
 def xml_to_dict(xmlElt, dicTypes):
 	dicResult = {}
 	for child in xmlElt:
-		strName = child.tag
+		strType = child.tag
 		if len(child):
 			elt = child.find("start")
 			if elt is not None:
-				start = dicTypes[strName](child.find("start").text)
-				stop = dicTypes[strName](child.find("stop").text)
-				step = dicTypes[strName](child.find("step").text)
-				dicResult[child.tag] = np.arange(start,stop,step)
+				start = dicTypes[strType](child.find("start").text)
+				stop = dicTypes[strType](child.find("stop").text)
+				step = dicTypes[strType](child.find("step").text)
+				dicResult[child.attrib["name"]] = np.arange(start,stop,step)
 			else:
 				dicResult[child.tag] = xml_to_dict(child, dicTypes)
 		else:
-			dicResult[child.tag] = dicTypes[child.tag](child.text)
+			dicResult[child.attrib["name"]] = dicTypes[child.tag](child.text)
 	return dicResult
 
 def xml_to_iter_dict(xmlElt, dicTypes):
 	dicResult = {}
 	for child in xmlElt:
-		strName = child.tag
+		strType = child.tag
 		if len(child):
 			elt = child.find("start")
 			if elt is not None:
-				start = dicTypes[strName](child.find("start").text)
-				stop = dicTypes[strName](child.find("stop").text)
-				step = dicTypes[strName](child.find("step").text)
-				dicResult[child.tag] = np.arange(start,stop,step)
+				start = dicTypes[strType](child.find("start").text)
+				stop = dicTypes[strType](child.find("stop").text)
+				step = dicTypes[strType](child.find("step").text)
+				dicResult[child.attrib["name"]] = np.arange(start,stop,step)
 			else:
-				dicResult[strName] = xml_to_iter_dict(child, dicTypes),
+				dicResult[child.tag] = xml_to_iter_dict(child, dicTypes),
 		else:
-			dicResult[strName] = dicTypes[strName](child.text),
+			dicResult[child.attrib["name"]] = dicTypes[strType](child.text),
 	return dicResult

@@ -112,12 +112,13 @@ class GraphClass:
 		''' set graph name '''
 		if name != "":
 			self.dicProperties["Name"] = name
-		#~ else:
-			#~ strName = self.dicProperties["Type"]
-			#~ for key,value in self.dicProperties.items():
-				#~ if (key != "Type") and (key != "Weighted") and (value.__class__ != dict):
-					#~ strName += '_' + key[0] + str(value)
-			#~ self.dicProperties["Name"] = strName
+		else:
+			strName = self.dicProperties["Type"]
+			tplIgnore = ("Type", "Name", "Weighted")
+			for key,value in self.dicProperties.items():
+				if key not in tplIgnore and (value.__class__ != dict):
+					strName += '_' + key[0] + str(value)
+			self.dicProperties["Name"] = strName
 
 	def update_prop(self, lstProp=[]):
 		''' update part or all of the graph properties '''

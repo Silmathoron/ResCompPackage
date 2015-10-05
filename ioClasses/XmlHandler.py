@@ -87,9 +87,6 @@ class XmlHandler:
 		for child in self.xmlParameters:
 			# add child to column
 			strType = child.tag
-			strName = child.attrib["name"]
-			data = xmlet.SubElement(header, "column")
-			data.attrib["name"] = strName
 			# generate list of values
 			if len(child):
 				start = self.dicType[strType](child.find("start").text)
@@ -115,7 +112,7 @@ class XmlHandler:
 	def get_networks(self):
 		eltNet = self.xmlHeader.find('./string[@name="networks"]')
 		if eltNet is not None:
-			strNetworksFile = self.eltNet.text
+			strNetworksFile = eltNet.text
 			if "xml" in strNetworksFile:
 				strGenerationType = "xml"
 				xmlTree = xmlet.parse(strNetworksFile)
@@ -145,6 +142,9 @@ class XmlHandler:
 				return xml_to_dict(xmlElt, self.dicType)
 		else:
 			return None
+
+	def from_string(self,string):
+		return xmlet.fromstring(string)
 	
 	#-------------#
 	# Data saving #
@@ -181,3 +181,4 @@ class XmlHandler:
 	
 	def to_string(self, xmlElt):
 		return xmlet.tostring(xmlElt)
+	

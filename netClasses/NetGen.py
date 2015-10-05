@@ -6,6 +6,8 @@
 
 from GraphClass import GraphClass
 from InputConnect import InputConnect
+from xml_tools import tensor_product
+from network_io import mat_to_string
 
 import numpy as np
 from copy import deepcopy
@@ -18,6 +20,7 @@ from copy import deepcopy
 #------------------------
 
 class NetGen:
+	
 	def __init__(self, strPath, xmlHandler):
 		# xml handler
 		self.xmlHandler = deepcopy(xmlHandler)
@@ -40,14 +43,16 @@ class NetGen:
 	# Process imput #
 	#---------------#
 	
-	def fromInputFile(self, strInputFile):
-		self.xmlHandler.processInputFile(strInputFile)
-		self.numAvg = self.xmlHandler.nAvg
+	def process_input_file(self, strInputFile):
+		''' get the networks and relevant information from the input file '''
+		self.xmlHandler.process_input(strInputFile)
 		# get info
-		self.strGenerationType, self.nIODim, netInfo = self.xmlHandler.getNetData()
+		self.numAvg = self.xmlHandler.get_header_item("averages")
+		self.strGenerationType, netInfo = self.xmlHandler.get_networks()
+		self.nIODim = self.xmlHandler.get_header_item("IODim")
 		if self.strGenerationType == "xml":
 			# list of dicts
-			self.lstGraphs = self.generateFromXml(netInfo)
+			self.lstGraphs = self.generate_from_xml(netInfo)
 		else:
 			# list of filenames or xmlElt
 			self.lstGraphs = netInfo
@@ -58,34 +63,34 @@ class NetGen:
 
 	## generate networks dictionaries
 
-	def generateFromXml(self, xmlRoot):
+	def generate_from_xml(self, xmlRoot):
 		# generate the grahs dictionaries
 		for xmlElt in xmlRoot:
 			dicGenerator = self.xmlHandler.convert_xml_to_dict(xmlElt, True)
-			dicGenerator["Type"] = xmlElt.tag,
 			# test for weight distribution
-			if "Weights" in dicGenerator.keys():
-				dicGenerator.update(dicGenerator["Weights"][0])
-				del dicGenerator["Weights"]
+			if "weights" in dicGenerator.keys():
+				dicGenerator.update(dicGenerator["weights"][0])
+				del dicGenerator["weights"]
+			#~ self.gen_ned(dicGenerator)
 			# set input connectivity parameters
-			dicGenerator["Input"][0]["ReservoirDim"] = self.numNodes(dicGenerator),
+			dicGenerator["Input"][0]["ReservoirDim"] = self.num_nodes(dicGenerator),
 			dicGenerator["Input"][0]["IODim"] = self.nIODim,
 			# generate list of individual graph dictionaries
 			lstKeys = dicGenerator.keys()
 			lstValues = dicGenerator.values()
-			self.lstDicGraphs += dicTensorProduct(lstKeys, lstValues)
+			self.lstDicGraphs += tensor_product(lstKeys, lstValues)
 		self.numNet = len(self.lstDicGraphs)
 	
 	## generate and save networks
 	
-	def nextPair(self):
+	def next_pair(self):
 		idx = self.currentNetLine
 		if self.strGenerationType == "xml":
 			if idx < self.numNet: # why not just pop??
 				# generate dictionaries
 				dicCurrent = self.lstDicGraphs[idx]
 				if not self.lstDicConnects:
-					self.lstDicConnects = dicTensorProduct(dicCurrent["Input"].keys(), dicCurrent["Input"].values())
+					self.lstDicConnects = tensor_product(dicCurrent["Input"].keys(), dicCurrent["Input"].values())
 					self.numConnect = len(self.lstDicConnects)
 				dicConnect = self.lstDicConnects.pop()
 				# count the steps
@@ -94,11 +99,9 @@ class NetGen:
 				self.currentStep = self.currentStep % (self.numAvg*self.numConnect)
 				# generate
 				idxTot = idx + self.currentStep
-				reservoir = GraphClass(idxTot, dicCurrent)
-				connect = Connectivity(reservoir, dicConnect)
-				strGraphFile = graphToString(reservoir, reservoir.getName())
-				strConnectFile = matConnectToString(connect.getMatConnect(), connect.getName())
-				return { "connectAsString":strConnectFile,"reservoirAsString":strGraphFile, "connect":connect, "reservoir":reservoir }
+				reservoir = GraphClass(dicCurrent)
+				connect = InputConnect(network=reservoir, dicProp=dicConnect)
+				return reservoir, connect
 			else:
 				return None
 		elif self.strGenerationType == "filesFromXml":
@@ -120,9 +123,7 @@ class NetGen:
 				# generate matrices
 				reservoir = genGraphFromFile(strGraphFileName)
 				connect = genConnectFromFile(strConnectFileName)
-				strGraphFile = graphToString(reservoir, reservoir.getName())
-				strConnectFile = matConnectToString(connect.getMatConnect(), connect.getName())
-				return { "connectAsString":strConnectFile,"reservoirAsString":strGraphFile, "connect":connect, "reservoir":reservoir }
+				return reservoir, connect
 			else:
 				return None
 		else:
@@ -135,6 +136,22 @@ class NetGen:
 	#-------#
 	# Utils #
 	#-------#
+
+	def gen_ned(self, dicIter):
+		''' generates missing entry between "Nodes", "Edges" and "Density" '''
+		lstMissingEntry = ["Edges", "Nodes", "Density"]
+		for tplKey in dicIter.keys():
+			key = tplKey[0]
+			if key in lstMissingEntry:
+				idxKey = lstMissingEntry.index(key)
+				del lstMissingEntry[idxKey]
+		keyMissing = lstMissingEntry[0]
+		if keyMissing == "Edges":
+			dicIter["Edges"] = np.square(dicIter["Nodes"][0]) * dicIter["Density"][0],
+		elif keyMissing == "Nodes":
+			dicIter["Nodes"] = int(np.floor(dicIter["Edges"][0] / dicIter["Density"][0])),
+		else:
+			dicIter["Density"] = dicIter["Edges"][0] / np.square(float(dicIter["Nodes"][0])),
 	
 	def setPath(self, strPath):
 		if strPath[-1] == "/":
@@ -142,7 +159,7 @@ class NetGen:
 		else:
 			self.strPath = strPath + "/"
 	
-	def numNodes(self, dico):
+	def num_nodes(self, dico):
 		try:
 			return dico["Nodes"][0]
 		except:

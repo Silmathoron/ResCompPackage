@@ -12,6 +12,8 @@ sys.path.append('../netClasses')
 import argparse
 import multiprocessing
 
+from global_param import *
+
 from CommPSX import CommPSX
 
 from Metropolis import Metropolis
@@ -59,8 +61,9 @@ if __name__ == "__main__":
 	comm.connectionClient = connectionComm
 	comm.deploy()
 	# check success
-	connectionExplorer.send([STATUS])
+	connectionExplorer.send((STATUS,))
 	bConnected = connectionExplorer.recv()
+	print("explorer connected")
 
 	if bConnected:
 		print("initiating")
