@@ -62,7 +62,7 @@ class XmlHandler:
 		else:
 			return None
 		
-	def gen_xml_param(self, input_id, recurrent_id, tplParam):
+	def gen_xml_param(self, input_id, recurrent_id, lstParam):
 		table = xmlet.Element("table") # changed from table
 		header = xmlet.SubElement(table, "header")
 		# generate the column and the lists of param values
@@ -71,7 +71,7 @@ class XmlHandler:
 		recFile = xmlet.SubElement(header, "column")
 		recFile.attrib["name"] = "rec_id"
 		# generate rows
-		for tplValues in tplParam:
+		for tplValues in lstParam:
 			row = xmlet.SubElement(table, "row")
 			data1 = xmlet.SubElement(row, "data")
 			data1.text = input_id
@@ -95,7 +95,7 @@ class XmlHandler:
 				lstValues.append(np.arange(start,stop,step))
 			else:
 				lstValues.append((self.dicType[strType](child.text),))
-		return tuple( elt for elt in product(*lstValues))
+		return list(product(*lstValues))
 
 	#------------------------#
 	# Retrieving information #

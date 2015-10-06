@@ -27,7 +27,7 @@ class GridSearcher(PhaseSpaceExplorer):
 		self.init_parameters()
 
 	def init_parameters(self):
-		self.tplParameterSet = self.xmlHandler.gen_grid_search_param()
+		self.lstParameterSet = self.xmlHandler.gen_grid_search_param()
 
 	#-----#
 	# Run #

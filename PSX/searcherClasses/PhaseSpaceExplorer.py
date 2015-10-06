@@ -77,7 +77,7 @@ class PhaseSpaceExplorer(object):
 	def send_parameters(self):
 		''' send the parameters to the server '''
 		strNameReservoir, strNameConnect = self.current_names()
-		xmlParamList = self.xmlHandler.gen_xml_param(strNameConnect,strNameReservoir,self.tplParameterSet)
+		xmlParamList = self.xmlHandler.gen_xml_param(strNameConnect,strNameReservoir,self.lstParameterSet)
 		rMaxProgress = float(len(xmlParamList)-1)
 		strParam = self.xmlHandler.to_string(xmlParamList)
 		self.connectionComm.send((PARAM, strParam, rMaxProgress))
