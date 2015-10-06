@@ -30,7 +30,7 @@ class CommPSX(SocketComm):
 	def process_server_data(self, command):
 		''' processing the data received from the server '''
 		bSetEventGo = True
-		print("server command", command)
+		#~ print("server command", command)
 		if command == READY:
 			sys.stdout.write("\rProgress: 0%\r")
 			self.bReceived = True
@@ -80,7 +80,7 @@ class CommPSX(SocketComm):
 	def process_client_instructions(self, tplInstructions):
 		''' processing the instruction from the client '''
 		command = tplInstructions[0]
-		print("client command", command)
+		#~ print("client command", command)
 		if command == CONTEXT:
 			self.send_context(tplInstructions[1])
 			self.eventGo.wait()
@@ -113,7 +113,6 @@ class CommPSX(SocketComm):
 		''' starting the run on the server '''
 		self.send_to_server(RUN)
 		self.eventGo.wait()
-		print("RESULTS ARE",self.results)
 		self.send_to_client(self.results)
 
 	def send_context(self, strXmlContext):

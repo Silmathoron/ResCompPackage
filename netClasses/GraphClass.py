@@ -29,7 +29,7 @@ class GraphClass:
 		''' init from properties '''
 		self.dicProperties = deepcopy(dicProp)
 		self.dicGetProp = { "Reciprocity": get_reciprocity, "Clustering": get_clustering, "Assortativity": get_assortativity,
-							"Spectral radius": get_spectral_radius, "Diameter": get_diameter, "SCC": get_num_scc,
+							"Diameter": get_diameter, "SCC": get_num_scc, #"Spectral radius": get_spectral_radius, 
 							"WCC": get_num_wcc, "InhibFrac": get_inhib_frac }
 		self.dicGenGraph = { "Erdos-Renyi": gen_er, "Free-scale": gen_fs, "EDR": gen_edr }
 		# create a graph

@@ -27,7 +27,7 @@ class GridSearcher(PhaseSpaceExplorer):
 		self.init_parameters()
 
 	def init_parameters(self):
-		self.lstParameterSet = self.xmlHandler.grid_search_param_list()
+		self.tplParameterSet = self.xmlHandler.gen_grid_search_param()
 
 	#-----#
 	# Run #
@@ -40,12 +40,10 @@ class GridSearcher(PhaseSpaceExplorer):
 			with open(self.args.path+"batch", "w") as fileBatchResult:
 				bCrunchGraphs = True
 				numRuns = 0
-				previousResult = []
 				dicResults = {}
 				while bCrunchGraphs:
 					print("--- Run %d ---" % numRuns)
 					bRecvd = self.send_next_matrices()
-					print("matrix received?",bRecvd)
 					if bRecvd:
 						# save information
 						strNameReservoir, strNameConnect = self.current_names()
@@ -54,24 +52,20 @@ class GridSearcher(PhaseSpaceExplorer):
 						# process them
 						sys.stdout.write("\rSending...")
 						sys.stdout.flush()
-						bRecvd = self.send_parameters()
+						xmlParam = self.send_parameters()
 						sys.stdout.write("\rParameters sent\n")
 						sys.stdout.flush()
 						# run and wait for results
 						xmlResults = self.xmlHandler.from_string(self.get_results())
 						if xmlResults is not None:
-							# save and store previous results
-							if previousResult:
-								strResultName = previousResult[0]+ '_' + previousResult[1]
-								dicResults[strResultName] = xmlHandler.save_xml_to_txt("{}{}.txt".format(previousResult[0], previousResult[1]), self.comm.results, previousResult[2])
+							# save results
+							strResultName = strNameConnect + "_" + strNameReservoir
+							dicResults[strResultName] = self.xmlHandler.save_results("{}.txt".format(strResultName), xmlResults, xmlParam)
 							# save current reservoir and connectivity
-							saveNeighbourList(dicPair["reservoir"], "results/matrices/")
-							saveConnect(dicPair["connect"],"results/matrices/",strNameReservoir)
-						previousResult = (strNameConnect, strNameReservoir, xmlResults)
-					else:
-						strResultName = previousResult[0] + '_' + previousResult[1]
-						dicResults[strResultName] = xmlHandler.save_xml_to_txt("{}{}.txt".format(previousResult[0], previousResult[1]), self.comm.results, previousResult[2])
-						bCrunchGraphs = False
+							#~ saveNeighbourList(dicPair["reservoir"], "results/matrices/")
+							#~ saveConnect(dicPair["connect"],"results/matrices/",strNameReservoir)
+						else:
+							bCrunchGraphs = False
 					numRuns += 1
 				print("Run finished")
 		

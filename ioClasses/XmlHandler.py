@@ -62,7 +62,7 @@ class XmlHandler:
 		else:
 			return None
 		
-	def gen_xml_param(self, input_id, recurrent_id, lstParam):
+	def gen_xml_param(self, input_id, recurrent_id, tplParam):
 		table = xmlet.Element("table") # changed from table
 		header = xmlet.SubElement(table, "header")
 		# generate the column and the lists of param values
@@ -71,7 +71,7 @@ class XmlHandler:
 		recFile = xmlet.SubElement(header, "column")
 		recFile.attrib["name"] = "rec_id"
 		# generate rows
-		for tplValues in lstParam:
+		for tplValues in tplParam:
 			row = xmlet.SubElement(table, "row")
 			data1 = xmlet.SubElement(row, "data")
 			data1.text = input_id
@@ -82,7 +82,7 @@ class XmlHandler:
 				data.text = str(value)
 		return table
 
-	def grid_search_param_list(self):
+	def gen_grid_search_param(self):
 		lstValues = []
 		for child in self.xmlParameters:
 			# add child to column
@@ -94,8 +94,8 @@ class XmlHandler:
 				step = self.dicType[strType](child.find("step").text)
 				lstValues.append(np.arange(start,stop,step))
 			else:
-				lstValues.append([self.dicType[strType](child.text)])
-		return product(*lstValues)
+				lstValues.append((self.dicType[strType](child.text),))
+		return tuple( elt for elt in product(*lstValues))
 
 	#------------------------#
 	# Retrieving information #
@@ -150,7 +150,7 @@ class XmlHandler:
 	# Data saving #
 	#-------------#
 	
-	def save_xml_to_txt(self, strFileName, xmlElt, xmlParamList):
+	def save_results(self, strFileName, xmlElt, xmlParamList):
 		lstHeader = []
 		lstParamIdx = []
 		xmlHeader = xmlElt[0]
@@ -173,7 +173,6 @@ class XmlHandler:
 				lstCols.append(child.text)
 			lstRows.append(lstCols)
 		np.savetxt("results/"+strFileName, np.array(lstRows, dtype=str), fmt='%s', delimiter=" ", header=strHeader)
-		return lstRows
 	
 	def save_xml(self, strFileName, xmlElt):
 		xmlTree = xmlet.ElementTree(xmlElt)

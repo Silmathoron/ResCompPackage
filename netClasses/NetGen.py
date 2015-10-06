@@ -125,13 +125,13 @@ class NetGen:
 				connect = genConnectFromFile(strConnectFileName)
 				return reservoir, connect
 			else:
-				return None
+				return None,None
 		else:
 			if idx < self.numNet:
 				self.currentNetLine += 1
 				lstStr = self.lstGraphs[idx].split(" ")
 			else:
-				return None
+				return None,None
 	
 	#-------#
 	# Utils #

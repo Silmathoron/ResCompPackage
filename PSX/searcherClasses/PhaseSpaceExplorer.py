@@ -43,7 +43,9 @@ class PhaseSpaceExplorer(object):
 		self.netGenerator.process_input_file(args.input)
 
 	@abstractmethod
-	def init_parameters(self): pass
+	def init_parameters(self):
+		''' initialize the parameters '''
+		pass
 
 	#------------------------#
 	# sending/receiving data #
@@ -66,10 +68,8 @@ class PhaseSpaceExplorer(object):
 			strConnect = mat_to_string(self.connect.as_csr(), self.connect.get_name())
 			self.connectionComm.send((MATRIX,strReservoir))
 			bPairReceived = self.connectionComm.recv()
-			print("first matrix received?",bPairReceived)
 			self.connectionComm.send((MATRIX,strConnect))
 			bPairReceived *= self.connectionComm.recv()
-			print("second matrix received?",bPairReceived)
 			return bPairReceived
 		else:
 			return False
@@ -77,12 +77,12 @@ class PhaseSpaceExplorer(object):
 	def send_parameters(self):
 		''' send the parameters to the server '''
 		strNameReservoir, strNameConnect = self.current_names()
-		xmlParamList = self.xmlHandler.gen_xml_param(strNameConnect,strNameReservoir,self.lstParameterSet)
+		xmlParamList = self.xmlHandler.gen_xml_param(strNameConnect,strNameReservoir,self.tplParameterSet)
 		rMaxProgress = float(len(xmlParamList)-1)
 		strParam = self.xmlHandler.to_string(xmlParamList)
 		self.connectionComm.send((PARAM, strParam, rMaxProgress))
 		bReceived = self.connectionComm.recv()
-		return bReceived
+		return xmlParamList
 		
 	def get_results(self):
 		''' launch the run and wait for the results, then get the scores into an array of reals '''

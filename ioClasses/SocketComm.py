@@ -58,7 +58,6 @@ class SocketComm(object):
 			print(msg, "could not open socket.")
 			self.socket = None
 		try:
-			print(self.tcpHost, self.tcpPort)
 			self.socket.connect((self.tcpHost, self.tcpPort))
 		except socket.error as msg:
 			self.socket.close()
@@ -120,7 +119,6 @@ class SocketComm(object):
 		self.socket.sendall(strData)
 
 	def send_to_client(self, obj):
-		print("sending to client")
 		''' sending information to the client '''
 		self.connectionClient.send(obj)
 
@@ -151,7 +149,7 @@ class SocketComm(object):
 			if command != MATRIX:
 				 command += "\r\n"
 			self.strBuffer = self.strBuffer[idxReturn:].lstrip("\r\n")
-		print("command from server", command)
+		#~ print("command from server", command)
 		return command
 
 	def recv_from_client(self):
