@@ -6,8 +6,8 @@
 
 from GraphClass import GraphClass
 from InputConnect import InputConnect
-from xml_tools import tensor_product
-from network_io import mat_to_string
+from ..commonTools import mat_to_string
+from ..ioClasses import tensor_product
 
 import numpy as np
 from copy import deepcopy

@@ -6,6 +6,9 @@
 import numpy as np
 
 
+__all__ = [ "rand_float_trunc_pl", "rand_int_trunc_exp" ]
+
+
 #
 #---
 # Random generators

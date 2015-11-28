@@ -17,6 +17,12 @@ from graph_tool.util import *
 from graph_tool.spectral import *
 
 
+__all__ = [ "degree_list", "betweenness_list", "get_assortativity",
+			"get_reciprocity", "get_clustering", "get_inhib_frac",
+			"get_num_scc", "get_num_wcc", "get_diameter",
+			"get_spectral_radius" ]
+
+
 
 #
 #---

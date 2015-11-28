@@ -31,6 +31,7 @@ class XmlHandler:
 		self.xmlHeader = None
 		self.xmlParameters = None
 		self.xmlSimulation = None
+		self.path = ""
 
 	#------------------#
 	# Input processing #
@@ -38,8 +39,9 @@ class XmlHandler:
 
 	## inital processing
 	
-	def process_input(self, strFileName):
-		tree = xmlet.parse(strFileName)
+	def process_input(self, strFileName, path=""):
+		self.path = path if self.path == "" or path != "" else self.path
+		tree = xmlet.parse(self.path+strFileName)
 		self.xmlRoot = tree.getroot()
 		# header and main param
 		self.xmlHeader = self.xmlRoot.find("header")
@@ -112,7 +114,7 @@ class XmlHandler:
 	def get_networks(self):
 		eltNet = self.xmlHeader.find('./string[@name="networks"]')
 		if eltNet is not None:
-			strNetworksFile = eltNet.text
+			strNetworksFile = self.path+eltNet.text
 			if "xml" in strNetworksFile:
 				strGenerationType = "xml"
 				xmlTree = xmlet.parse(strNetworksFile)
@@ -126,7 +128,7 @@ class XmlHandler:
 
 	def get_string_context(self):
 		strFileContext = self.get_header_item("context")
-		tree = xmlet.parse(strFileContext)
+		tree = xmlet.parse(self.path+strFileContext)
 		root = tree.getroot()
 		return xmlet.tostring(root)
 
@@ -172,7 +174,9 @@ class XmlHandler:
 			for child in rowRes:
 				lstCols.append(child.text)
 			lstRows.append(lstCols)
-		np.savetxt("results/"+strFileName, np.array(lstRows, dtype=str), fmt='%s', delimiter=" ", header=strHeader)
+		np.savetxt(	self.path+"results/"+strFileName,
+					np.array(lstRows, dtype=str), fmt='%s', delimiter=" ",
+					header=strHeader )
 	
 	def save_xml(self, strFileName, xmlElt):
 		xmlTree = xmlet.ElementTree(xmlElt)

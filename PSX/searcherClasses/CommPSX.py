@@ -6,9 +6,8 @@
 
 import sys
 
-from SocketComm import SocketComm
-from socket_protocol import *
-from global_param import *
+from ...ioClasses import *
+from ..global_param import *
 
 
 

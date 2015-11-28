@@ -3,6 +3,7 @@
 
 """ Global parameters for PSX """
 
+import os
 
 # communication
 #~ DATA = "DATA\r\n"
@@ -21,4 +22,5 @@ RUN = "RUN\r\n"
 #~ QUIT = "QUIT\r\n"
 
 # files and paths
-PATH_RES_CONNECT = "data/"
+IPATH = 'data/input.xml'
+PATH = os.path.dirname(os.path.realpath(__file__)) + "/"

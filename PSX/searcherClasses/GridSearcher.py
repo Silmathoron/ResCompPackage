@@ -7,7 +7,7 @@
 import sys
 
 from PhaseSpaceExplorer import PhaseSpaceExplorer
-from global_param import *
+from ..global_param import *
 
 
 

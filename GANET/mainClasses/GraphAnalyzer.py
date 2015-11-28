@@ -6,15 +6,12 @@
 import numpy as np
 import subprocess
 from copy import deepcopy
-import sys
 import multiprocessing
 
 from PySide import QtGui
 
-from GraphClass import GraphClass
-from graph_measure import *
+from ...netClasses import *
 from plotWidget import PlotWidget
-sys.path.append(sys.path[0]+'/mainClasses/classTools/')
 from graph_analysis_tools import *
 
 

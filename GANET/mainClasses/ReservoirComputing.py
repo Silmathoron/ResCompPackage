@@ -8,9 +8,8 @@ sys.path.append("netTools/")
 sys.path.append("plottingTools/")
 import numpy as np
 
-from GraphClass import GraphClass
-from InputConnect import InputConnect
-from plotWidget import PlotWidget
+from ... import GraphClass, InputConnect
+from .plotWidget import PlotWidget
 
 
 class ReservoirComputing:

@@ -9,7 +9,7 @@ from itertools import product
 from copy import deepcopy
 
 from PhaseSpaceExplorer import PhaseSpaceExplorer
-from global_param import *
+from ..global_param import *
 
 
 

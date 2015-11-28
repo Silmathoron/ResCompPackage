@@ -7,7 +7,7 @@ import numpy as np
 import scipy.sparse as ssp
 
 from graph_measure import betweenness_list, degree_list
-from random_gen import rand_int_trunc_exp
+from ..commonTools import rand_int_trunc_exp
 
 
 

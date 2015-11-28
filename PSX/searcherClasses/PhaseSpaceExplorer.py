@@ -9,11 +9,11 @@ from itertools import product
 from copy import deepcopy
 from abc import ABCMeta, abstractmethod
 
-from NetGen import NetGen
-from XmlHandler import XmlHandler
+from ...netClasses import NetGen
+from ...ioClasses import XmlHandler
 
-from network_io import mat_to_string
-from global_param import *
+from ...commonTools import mat_to_string
+from ..global_param import *
 
 
 
@@ -35,7 +35,7 @@ class PhaseSpaceExplorer(object):
 		# process input file
 		self.args = args
 		self.xmlHandler = XmlHandler()
-		self.xmlHandler.process_input(args.input)
+		self.xmlHandler.process_input(args.input, args.path)
 		self.numAvg = self.xmlHandler.get_header_item("averages")
 		if self.args.path[-1] != "/": self.args.path += "/"
 		# create children

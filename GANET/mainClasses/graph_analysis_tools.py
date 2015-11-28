@@ -6,7 +6,7 @@
 import numpy as np
 from copy import deepcopy
 
-from graph_measure import degree_list, betweenness_list
+from ...netClasses import degree_list, betweenness_list
 
 
 #

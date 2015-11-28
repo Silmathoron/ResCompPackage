@@ -9,7 +9,7 @@ import sys
 import multiprocessing
 import time
 
-from GraphClass import GraphClass
+from ... import GraphClass
 
 
 
