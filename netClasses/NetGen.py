@@ -103,7 +103,7 @@ class NetGen:
 				connect = InputConnect(network=reservoir, dicProp=dicConnect)
 				return reservoir, connect
 			else:
-				return None
+				return None, None
 		elif self.strGenerationType == "filesFromXml":
 			# check whether we have generated all subgraphs for a given row
 			if self.currentStep == self.numAvg-1:

@@ -185,4 +185,3 @@ class InputConnect:
 
 	def __del__(self):
 		InputConnect.numConnectivities -= 1
-		print('Connectivity died')

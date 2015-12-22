@@ -29,6 +29,15 @@ class GridSearcher(PhaseSpaceExplorer):
 	def init_parameters(self):
 		self.lstParameterSet = self.xmlHandler.gen_grid_search_param()
 
+	def send_parameters(self):
+		''' send the parameters to the server '''
+		strNameReservoir, strNameConnect = self.current_names()
+		xmlParamList = self.xmlHandler.gen_xml_param(strNameConnect,strNameReservoir,self.lstParameterSet)
+		rMaxProgress = float(len(xmlParamList)-1)
+		strParam = self.xmlHandler.to_string(xmlParamList)
+		self.connectionComm.send((PARAM, strParam, rMaxProgress))
+		bReceived = self.connectionComm.recv()
+
 	#-----#
 	# Run #
 	#-----#
@@ -40,7 +49,7 @@ class GridSearcher(PhaseSpaceExplorer):
 			with open(self.args.path+"batch", "w") as fileBatchResult:
 				bCrunchGraphs = True
 				numRuns = 0
-				dicResults = {}
+				dicSaving = {}
 				while bCrunchGraphs:
 					print("--- Run %d ---" % numRuns)
 					bRecvd = self.send_next_matrices()
@@ -52,20 +61,19 @@ class GridSearcher(PhaseSpaceExplorer):
 						# process them
 						sys.stdout.write("\rSending...")
 						sys.stdout.flush()
-						xmlParam = self.send_parameters()
+						self.send_parameters()
 						sys.stdout.write("\rParameters sent\n")
 						sys.stdout.flush()
 						# run and wait for results
-						xmlResults = self.xmlHandler.from_string(self.get_results())
-						if xmlResults is not None:
-							# save results
-							strResultName = strNameConnect + "_" + strNameReservoir
-							dicResults[strResultName] = self.xmlHandler.save_results("{}.txt".format(strResultName), xmlResults, xmlParam)
-							# save current reservoir and connectivity
-							#~ saveNeighbourList(dicPair["reservoir"], "results/matrices/")
-							#~ saveConnect(dicPair["connect"],"results/matrices/",strNameReservoir)
-						else:
-							bCrunchGraphs = False
+						dicResults = self.get_results(self.lstParameterSet)
+						# save results
+						strResultName = strNameConnect + "_" + strNameReservoir
+						dicSaving[strResultName] = self.xmlHandler.save_results("{}.txt".format(strResultName), dicResults)
+						# save current reservoir and connectivity
+						#~ saveNeighbourList(dicPair["reservoir"], "results/matrices/")
+						#~ saveConnect(dicPair["connect"],"results/matrices/",strNameReservoir)
+					else:
+						bCrunchGraphs = False
 					numRuns += 1
 				print("Run finished")
 		

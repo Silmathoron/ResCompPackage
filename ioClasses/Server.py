@@ -3,9 +3,11 @@
 
 """ Server """
 
-from socket_protocol import *
-
 import socket, sys, time
+
+from socket_protocol import *
+import xml.etree.ElementTree as xmlet
+
 
 
 
@@ -14,7 +16,7 @@ import socket, sys, time
 # Server
 #-----------------
 
-HOST, PORT = '127.0.0.1', 4242
+HOST, PORT = '127.0.0.1', 4243
 
 class Server:
 	
@@ -22,6 +24,7 @@ class Server:
 		self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self.s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 		self.strBuffer = ""
+		self.data = ""
 		# Bind socket to local host and port
 		try:
 			self.s.bind((HOST, PORT))
@@ -74,7 +77,7 @@ class Server:
 			while "</table>" not in self.strBuffer:
 				self.strBuffer += self.conn.recv(4096)
 			idxDataEnd = self.strBuffer.find("</table>")
-			data = self.strBuffer[:idxDataEnd+8]
+			self.data = xmlet.fromstring(self.strBuffer[:idxDataEnd+8])
 			self.strBuffer = self.strBuffer[idxDataEnd+8:].lstrip("\r\n")
 			self.conn.send(READY)
 			return True
@@ -87,7 +90,20 @@ class Server:
 		elif command == "RESULTS":
 			nResults = 100
 			self.conn.send(RESULTS)
-			self.conn.send("<table><pouet>crap</pouet></table>\r\n")
+			results = self.data.copy()
+			for old,child in zip(self.data, results):
+				res = 0.
+				child.clear()
+				item = child.makeelement("item", {"name": "res"})
+				for subchild in old:
+					try:
+						res += float(subchild.text)
+					except:
+						pass
+				item.text = str(res)
+				child.append(item)
+			self.conn.send(xmlet.tostring(results)+"\r\n")
+			print("results sent")
 			return True
 		else:
 			return False

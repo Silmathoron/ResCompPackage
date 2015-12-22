@@ -97,7 +97,8 @@ class XmlHandler:
 				lstValues.append(np.arange(start,stop,step))
 			else:
 				lstValues.append((self.dicType[strType](child.text),))
-		return list(product(*lstValues))
+		self.grid_param = list(product(*lstValues))
+		return self.grid_param
 
 	#------------------------#
 	# Retrieving information #
@@ -147,36 +148,46 @@ class XmlHandler:
 
 	def from_string(self,string):
 		return xmlet.fromstring(string)
+
+	def results_dic(self, strXml, lstParam):
+		xmlElt = self.from_string(strXml)
+		dicResults = { "param_names": [], "results_names": [] }
+		# header names
+		xmlHeader = xmlElt[0]
+		for child in self.xmlParameters:
+			dicResults["param_names"].append(child.attrib["name"])
+		for child in xmlHeader:
+			dicResults["results_names"].append(child.attrib["name"])
+		# content
+		for i,row in enumerate(xmlElt[1:]):
+			lstResult = []
+			for result in row:
+				lstResult.append(float(result.text))
+			dicResults[lstParam[i]] = lstResult
+		return dicResults
 	
 	#-------------#
 	# Data saving #
 	#-------------#
 	
-	def save_results(self, strFileName, xmlElt, xmlParamList):
+	def save_results(self, strFileName, dicResults):
 		lstHeader = []
 		lstParamIdx = []
-		xmlHeader = xmlElt[0]
-		nLenRes = len(xmlElt)-1
-		for i,child in enumerate(xmlParamList[0]):
-			if child.attrib["name"] not in ("in_id", "rec_id", "stimulus_train_base", "stimulus_test_base"):
-				lstHeader.append(child.attrib["name"])
-				lstParamIdx.append(i)
-		nLenParam = len(lstParamIdx)
-		for child in xmlHeader:
-			lstHeader.append(child.attrib["name"])
+		self.path+"results/"+strFileName
+		lstHeader = list(dicResults["param_names"])
+		lstHeader.extend(dicResults["results_names"])
+		del dicResults["param_names"]
+		del dicResults["results_names"]
 		lstRows = []
 		strHeader = " ".join(lstHeader)
-		for rowRes, rowParam in zip(xmlElt[1:], xmlParamList[1:]):
-			lstCols = []
-			for i,child in enumerate(rowParam):
-				if i in lstParamIdx:
-					lstCols.append(child.text)
-			for child in rowRes:
-				lstCols.append(child.text)
-			lstRows.append(lstCols)
-		np.savetxt(	self.path+"results/"+strFileName,
-					np.array(lstRows, dtype=str), fmt='%s', delimiter=" ",
-					header=strHeader )
+		for param, result in dicResults.iteritems():
+			row = list(param)
+			row.extend(result)
+			lstRows.append(row)
+		arr = np.array(lstRows)
+		np.savetxt(	strFileName, np.array(lstRows, dtype=str), fmt='%s',
+					delimiter=" ", header=strHeader )
+		return strFileName
 	
 	def save_xml(self, strFileName, xmlElt):
 		xmlTree = xmlet.ElementTree(xmlElt)

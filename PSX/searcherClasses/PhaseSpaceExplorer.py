@@ -37,7 +37,7 @@ class PhaseSpaceExplorer(object):
 		self.xmlHandler = XmlHandler()
 		self.xmlHandler.process_input(args.input, args.path)
 		self.numAvg = self.xmlHandler.get_header_item("averages")
-		if self.args.path[-1] != "/": self.args.path += "/"
+		self.args.path += "/" if self.args.path[-1] != "/" else ""
 		# create children
 		self.netGenerator = NetGen(args.path, self.xmlHandler)
 		self.netGenerator.process_input_file(args.input)
@@ -74,21 +74,15 @@ class PhaseSpaceExplorer(object):
 		else:
 			return False
 
-	def send_parameters(self):
-		''' send the parameters to the server '''
-		strNameReservoir, strNameConnect = self.current_names()
-		xmlParamList = self.xmlHandler.gen_xml_param(strNameConnect,strNameReservoir,self.lstParameterSet)
-		rMaxProgress = float(len(xmlParamList)-1)
-		strParam = self.xmlHandler.to_string(xmlParamList)
-		self.connectionComm.send((PARAM, strParam, rMaxProgress))
-		bReceived = self.connectionComm.recv()
-		return xmlParamList
+	@abstractmethod
+	def send_parameters(self): pass
 		
-	def get_results(self):
+	def get_results(self, lstParam):
 		''' launch the run and wait for the results, then get the scores into an array of reals '''
 		self.connectionComm.send((RUN,))
 		strXmlResults = self.connectionComm.recv()
-		return strXmlResults
+		results = self.xmlHandler.results_dic(strXmlResults, lstParam)
+		return results
 
 	#---------#
 	# Running #

@@ -16,3 +16,7 @@
 
 ## GANET
 	* transform all functions into the_dash_mode
+
+## XmlHandler
+    * check what Nico's soft is sending back as results
+    * look at the Metropolis and GenAlg results versions

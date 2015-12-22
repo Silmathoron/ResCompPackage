@@ -117,9 +117,9 @@ class Metropolis(PhaseSpaceExplorer):
 				if bRecvd:
 					# calculate score for initial grid
 					self.lstParameterSet = self.init_parameters()
-					print(self.lstParameterSet.__class__)
+					#~ print(self.lstParameterSet.__class__)
 					xmlParam = self.send_parameters()
-					xmlResults = self.get_results()
+					xmlResults = self.get_results(xmlParam)
 					raScore = self.get_score(xmlResults)
 					# proceed with Metropolis
 					for i in range(500):
@@ -127,7 +127,7 @@ class Metropolis(PhaseSpaceExplorer):
 						lstOldParameters = deepcopy(self.lstParameterSet)
 						self.next_parameter_set()
 						xmlParam = self.send_parameters()
-						xmlResults = self.get_results()
+						xmlResults = self.get_results(xmlParam)
 						raNewScore = self.get_score(xmlResults)
 						# compare the scores and accept selected moves
 						raCompare = np.exp((raScore-raNewScore)/self.rTemperature)

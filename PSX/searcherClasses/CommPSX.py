@@ -48,7 +48,6 @@ class CommPSX(SocketComm):
 			self.send_to_server(RESULTS)
 			bSetEventGo = False
 		elif command == RESULTS:
-			print("Receiving results")
 			strXmlEnd = "</table>\r\n"
 			while strXmlEnd not in self.strBuffer:
 				self.strBuffer += self.socket.recv(4096)

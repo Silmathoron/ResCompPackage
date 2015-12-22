@@ -27,7 +27,8 @@ parser.add_argument("-i", "--input", action="store", default=IPATH,
 					help="Path to XML input file")
 parser.add_argument("-p", "--path", action="store", default=PATH,
 					help="Path to saving/result folder")
-parser.add_argument("-s", "--server", action="store", default="10.69.200.8:4242",
+#~ parser.add_argument("-s", "--server", action="store", default="10.69.200.8:4242",
+parser.add_argument("-s", "--server", action="store", default="127.0.0.1:4243",
 					help="Server adress and port")
 parser.add_argument("-t", "--timeout", action="store", default=5000,
 					help="Socket timeout")
