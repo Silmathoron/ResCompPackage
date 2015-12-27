@@ -1,5 +1,6 @@
 *.pyc
-GANET/data
-PSX/data
-PSX/results
+src/rescomp/GANET/data
+src/rescomp/PSX/data
+src/rescomp/PSX/results
+test/results
 *.geany
