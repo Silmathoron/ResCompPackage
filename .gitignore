@@ -3,4 +3,5 @@ src/rescomp/GANET/data
 src/rescomp/PSX/data
 src/rescomp/PSX/results
 test/results
+test/*
 *.geany

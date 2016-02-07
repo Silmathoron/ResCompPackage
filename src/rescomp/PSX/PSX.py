@@ -73,7 +73,7 @@ class Psx:
 
 	@property
 	def results(self):
-		return self.explore.dicSaving
+		return self.explore.diSaving
 
 	def run(self):
 		if self.bConnected:

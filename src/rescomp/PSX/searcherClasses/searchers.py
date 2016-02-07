@@ -24,6 +24,10 @@ from rescomp.PSX.global_param import *
 #
 
 class PhaseSpaceExplorer(object):
+
+	'''
+	Abstract base class for phase space exploration.
+	'''
 	
 	#------#
 	# Init #
@@ -31,7 +35,23 @@ class PhaseSpaceExplorer(object):
 
 	__metaclass__  = ABCMeta
 	
-	def __init__(self, args, connection):
+	def __init__(self, args, connection, result_cols=[-1], weights=[1.]):
+		'''
+		Create an instance of :class:`~rescomp.PSX.PhaseSpaceExplorer`.
+
+		Parameters
+		----------
+		args : container
+			Arguments from a parser, which contain the exploration options as
+			`args.input`, `args.path`...
+		connection : :class:`multiprocessing.Pipe`
+			Tunnel to interact with the :class:`~rescomp.PSX.CommPSX` object.
+		result_cols : list of ints, optional (default: [-1])
+			List of indices to the columns containing the results.
+		weights : list of floats, optional (default: [1.])
+			List of weights to compute the score as a weighted average of the
+			results.
+		'''
 		self.connectionComm = connection
 		# process input file
 		self.args = args
@@ -42,10 +62,26 @@ class PhaseSpaceExplorer(object):
 		# create children
 		self.netGenerator = NetGen(args.path, self.xmlHandler)
 		self.netGenerator.process_input_file(args.input)
+		# set score computation
+		self.result_cols = result_cols
+		self.weights = weights
+		if len(result_cols) == 1:
+			def _score(result, cols, weights):
+				return result[cols[0]]
+			self.score = _score
+		else:
+			def _score(result, cols, weights):
+				tmp = [ result[i] for i in cols ]
+				return np.average(tmp, weights=weights)
+			self.score = _score
 
 	@abstractmethod
 	def init_parameters(self):
-		''' initialize the parameters '''
+		'''
+		Initialize the parameters.
+		.. note :
+			This must be implemented in any subclass.
+		'''
 		pass
 
 	#------------------------#
@@ -65,7 +101,7 @@ class PhaseSpaceExplorer(object):
 		''' send the next pair of matrices to the server '''
 		self.reservoir, self.connect = self.netGenerator.next_pair()
 		if self.reservoir is not None:
-			strReservoir = mat_to_string(self.reservoir.get_mat_adjacency(), self.reservoir.get_name())
+			strReservoir = mat_to_string(self.reservoir.adjacency_matrix(), self.reservoir.get_name())
 			strConnect = mat_to_string(self.connect.as_csr(), self.connect.get_name())
 			self.connectionComm.send((MATRIX,strReservoir))
 			bPairReceived = self.connectionComm.recv()
@@ -76,31 +112,41 @@ class PhaseSpaceExplorer(object):
 			return False
 
 	@abstractmethod
-	def send_parameters(self): pass
-		
+	def send_parameters(self):
+		'''
+		Send the parameters.
+		.. note :
+			This must be implemented in any subclass.
+		'''
+		pass
+
+	@abstractmethod
 	def get_results(self, lstParam):
-		''' launch the run and wait for the results, then get the scores into an array of reals '''
-		self.connectionComm.send((RUN,))
-		strXmlResults = self.connectionComm.recv()
-		results = self.xmlHandler.results_dic(strXmlResults, lstParam)
-		return results
+		pass
 
 	#---------#
 	# Running #
 	#---------#
 
 	@abstractmethod
-	def run(self): pass
+	def run(self):
+		'''
+		Exploration algorithm.
+		.. note :
+			This must be implemented in any subclass as it is specific of each
+			explorator.
+		'''
+		pass
 
 	#----------------#
 	# Tool functions #
 	#----------------#
 
-	def make_dirs(self):
-		pass
-
 	def current_names(self):
-		return self.reservoir.get_name(), self.connect.get_name()
+		if None not in (self.reservoir, self.connect):
+			return self.reservoir.get_name(), self.connect.get_name()
+		else:
+			return None, None
 
 	def save_networks(self, path):
 		save_reservoir(self.reservoir, path)
@@ -126,10 +172,17 @@ class GridSearcher(PhaseSpaceExplorer):
 	# Init #
 	#------#
 
-	def __init__(self, args, connection):
+	def __init__(self, args, connection, **kwargs):
 		super(GridSearcher, self).__init__(args, connection)
-		self.dicSaving = {}
+		self.diSaving = {}
 		self.init_parameters()
+
+	def get_results(self, lstParam):
+		''' launch the run and wait for the results, then get the scores into an array of reals '''
+		self.connectionComm.send((RUN,))
+		strXmlResults = self.connectionComm.recv()
+		results = self.xmlHandler.results_dic(strXmlResults, lstParam)
+		return results
 
 	def init_parameters(self):
 		self.lstParameterSet = self.xmlHandler.gen_grid_search_param()
@@ -177,7 +230,7 @@ class GridSearcher(PhaseSpaceExplorer):
 						dicResults = self.get_results(self.lstParameterSet)
 						# save results
 						strResultName = strNameConnect + "_" + strNameReservoir
-						self.dicSaving[strResultName] = self.xmlHandler.save_results("{}.txt".format(strResultName), dicResults, self.args.path)
+						self.diSaving[strResultName] = self.xmlHandler.save_results("{}.txt".format(strResultName), dicResults, path=self.args.path)
 						# save current reservoir and connectivity
 						self.save_networks(self.args.path+MATRIX_SUBPATH)
 					else:
@@ -197,10 +250,13 @@ class Metropolis(PhaseSpaceExplorer):
 	# Init #
 	#------#
 
-	def __init__(self, args, connection):
+	def __init__(self, args, connection, **kwargs):
 		super(Metropolis, self).__init__(args, connection)
 		# temperature
-		self.rTemperature = 1.0
+		self.rTemperature = 0.02
+		self.diSaving = {}
+		self.diScores = {}
+		self.diVisit = {}
 
 	def init_parameters(self):
 		''' generate the initial set of parameters:
@@ -215,6 +271,8 @@ class Metropolis(PhaseSpaceExplorer):
 				self.numVarParam += 1
 			else:
 				self.lstParam.append(key)
+		# update the order of the parameters for the XmlHandler
+		self.xmlHandler.lstParamNames = deepcopy(self.lstParam)
 		# generate dictionary describing these parameters
 		self.dicVarParam = { self.lstParam[i]: {"start": dicParam[self.lstParam[i]][0],
 												"step_size": dicParam[self.lstParam[i]][1]-dicParam[self.lstParam[i]][0],
@@ -238,7 +296,7 @@ class Metropolis(PhaseSpaceExplorer):
 			for i in range(self.numVarParam,len(dicParam)-1):
 				lstLstParam.append((dicParam[self.lstParam[i]],))
 		tplTplparam = tuple(product(*lstLstParam))
-		return [ list(tpl) for tpl in tplTplparam ]
+		return [ tpl for tpl in tplTplparam ]
 
 	#------------#
 	# Processing #
@@ -247,30 +305,60 @@ class Metropolis(PhaseSpaceExplorer):
 	def next_parameter_set(self):
 		''' generate the next set of parameters '''
 		numSets = len(self.lstParameterSet)
-		#~ self.lstParameterSet = []
-		naParamToChange = np.random.randint(0,self.numVarParam,numSets)
-		naStepValue = 2*np.random.randint(0,2,numSets)-1
-		for idx,paramNumber in enumerate(naParamToChange):
+		# randomly select a parameter and a stride in [-2, 2]
+		arrParamToChange = np.random.randint(0,self.numVarParam,numSets)
+		arrStepValue = (2*np.random.randint(0,2,numSets)-1)*np.random.randint(1,3,numSets)
+		# apply
+		for idx,paramNumber in enumerate(arrParamToChange):
 			dicParam = self.dicVarParam[self.lstParam[paramNumber]]
 			paramMaxValue = dicParam["start"] + dicParam["num_steps"] * dicParam["step_size"]
-			if self.lstParameterSet[idx][paramNumber] == dicParam["start"]:
-				self.lstParameterSet[idx][paramNumber] += dicParam["step_size"]
-			elif self.lstParameterSet[idx][paramNumber] == paramMaxValue:
-				self.lstParameterSet[idx][paramNumber] -= dicParam["step_size"]
+			lstParams = list(self.lstParameterSet[idx])
+			# try the step
+			step = dicParam["step_size"] * arrStepValue[idx]
+			new = lstParams[paramNumber] + step
+			# correct if out of grid, else accept
+			if new <= dicParam["start"] or new >= paramMaxValue:
+				lstParams[paramNumber] -= step
 			else:
-				self.lstParameterSet[idx][paramNumber] += dicParam["step_size"] * naStepValue[idx]
+				lstParams[paramNumber] += step
+			self.lstParameterSet[idx] = tuple(lstParams)
 
-	def get_score(self, xmlResults):
+	def get_results(self, lstParam):
+		''' launch the run and wait for the results, then get the scores into an array of reals '''
+		self.connectionComm.send((RUN,))
+		strXmlResults = self.connectionComm.recv()
+		results = self.xmlHandler.results_dic(strXmlResults, lstParam, search='metropolis')
+		return results
+
+	def send_parameters(self):
+		''' send the parameters to the server '''
+		strNameReservoir, strNameConnect = self.current_names()
+		xmlParamList = self.xmlHandler.gen_xml_param(strNameConnect, strNameReservoir, self.lstParameterSet)
+		rMaxProgress = float(len(xmlParamList)-1)
+		strParam = self.xmlHandler.to_string(xmlParamList)
+		self.connectionComm.send((PARAM, strParam, rMaxProgress))
+		bReceived = self.connectionComm.recv()
+
+	def get_score(self, dicResults):
 		''' return a numpy array of reals from the xml results '''
-		#~ raScore = np.zeros(len(xmlResults))
-		#~ for i,child in enumerate(xmlResults):
-			#~ raScore[i] = float(child[-1].text)
-		# tmp
-		raScore = np.random.random(len(self.lstParameterSet))
+		del dicResults["results_names"]
+		raScore = np.zeros(len(self.lstParameterSet))
+		for i,params in enumerate(self.lstParameterSet):
+			result = dicResults[params].pop()
+			raScore[i] = self.score(result, self.result_cols, self.weights)
 		return raScore
 
-	def update_scores(self):
-		None
+	def update_scores(self, array_score):
+		for params,score in zip(self.lstParameterSet, array_score):
+			if params in self.diScores:
+				#~ print(np.sum(params), self.diScores[params], score)
+				w = self.diVisit[params]
+				self.diScores[params] = (self.diScores[params]*w + score)/(w+1)
+				self.diVisit[params] += 1
+			else:
+				#~ print(np.sum(params))
+				self.diScores[params] = score
+				self.diVisit[params] = 1			
 
 	#-----#
 	# Run #
@@ -280,6 +368,7 @@ class Metropolis(PhaseSpaceExplorer):
 		''' TODO: test the communication with comm process and Nico's server
 			Take care of results saving '''
 		bContinue = self.send_xml_context()
+		import matplotlib.pyplot as plt
 		if bContinue:
 			print("run started")
 			bCrunchGraphs = True
@@ -287,21 +376,30 @@ class Metropolis(PhaseSpaceExplorer):
 			while bCrunchGraphs:
 				print("--- Run %d ---" % numRuns)
 				bRecvd = self.send_next_matrices()
+				# save information
+				strNameReservoir, strNameConnect = self.current_names()
 				if bRecvd:
 					# calculate score for initial grid
 					self.lstParameterSet = self.init_parameters()
 					#~ print(self.lstParameterSet.__class__)
-					xmlParam = self.send_parameters()
-					xmlResults = self.get_results(xmlParam)
-					raScore = self.get_score(xmlResults)
+					sys.stdout.write("\rSending...")
+					sys.stdout.flush()
+					self.send_parameters()
+					sys.stdout.write("\rParameters sent\n")
+					sys.stdout.flush()
+					dicResults = self.get_results(self.lstParameterSet) # 12/27/15: the results are indeed the sumof the parameters
+					self.diScores["results_names"] = dicResults["results_names"]
+					raScore = self.get_score(dicResults)
+					self.update_scores(raScore)
 					# proceed with Metropolis
-					for i in range(500):
+					for i in range(50):
 						# propose and evaluate new set of parameters
 						lstOldParameters = deepcopy(self.lstParameterSet)
 						self.next_parameter_set()
-						xmlParam = self.send_parameters()
-						xmlResults = self.get_results(xmlParam)
-						raNewScore = self.get_score(xmlResults)
+						self.send_parameters()
+						""" @todo: check code up to here """
+						dicResults = self.get_results(self.lstParameterSet)
+						raNewScore = self.get_score(dicResults)
 						# compare the scores and accept selected moves
 						raCompare = np.exp((raScore-raNewScore)/self.rTemperature)
 						raRandom = np.random.uniform(0,1)
@@ -309,8 +407,15 @@ class Metropolis(PhaseSpaceExplorer):
 						for j,paramSet in enumerate(lstOldParameters):
 							if baSmaller[j]:
 								self.lstParameterSet[j] = paramSet
+							else:
+								raScore[j] = raNewScore[j]
 						# update scores and variances
-						self.update_scores()
+						self.update_scores(raScore)
+					plt.scatter([ np.sum(t) for t in self.diVisit.keys() ], [ v for v in self.diVisit.values() ])
+					plt.show()
+					# save
+					strResultName = strNameConnect + "_" + strNameReservoir
+					self.diSaving[strResultName] = self.xmlHandler.save_results("{}.txt".format(strResultName), self.diScores, self.diVisit, self.args.path)
 				else:
 					bCrunchGraphs = False
 				numRuns += 1

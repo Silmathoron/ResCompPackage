@@ -1,17 +1,17 @@
 <networks>
-<!--
 	<graph>
-		<string name="Type">EDR</string>
-		<int name="Number">5</int>
-		<int name="Nodes">1000</int>
-		<float name="Density">
+		<string name="type">distance_rule</string>
+		<int name="number">1</int>
+		<int name="nodes">1000</int>
+		<float name="density">
 			<start>0.008</start>
 			<stop>0.012</stop>
 			<step>0.001</step>
 		</float>
-		<float name="InhibFrac">0.5</float>
-		<float name="Lambda">0.04</float>
-		<int name="Rho">1000</int>
+		<string name="rule">exp</string>
+		<float name="ifrac">0.5</float>
+		<float name="scale">0.04</float>
+		<int name="neuron_density">1000</int>
 		<weights>
 			<bool name="Weighted">True</bool>
 			<string name="Distribution">Betweenness</string>
@@ -30,12 +30,11 @@
 			<float name="VarInhib">0.3</float>
 		</Input>
 	</graph>
--->
 
 	<graph>
-		<string name="Type">Erdos-Renyi</string>
-		<int name="Number">1</int>
-		<int name="Nodes">1000</int>
+		<string name="type">erdos_renyi</string>
+		<int name="number">1</int>
+		<int name="nodes">1000</int>
 <!--
 		<float name="Density">
 			<start>0.008</start>
@@ -43,8 +42,8 @@
 			<step>0.001</step>
 		</float>
 -->
-		<float name="Density">0.008</float>
-		<float name="InhibFrac">0.5</float>
+		<float name="density">0.008</float>
+		<float name="ifrac">0.5</float>
 		<weights>
 			<bool name="Weighted">True</bool>
 			<string name="Distribution">Betweenness</string>

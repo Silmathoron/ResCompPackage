@@ -83,9 +83,7 @@ class Server:
 			self.conn.send(READY)
 			return True
 		elif command == "RUN":
-			time.sleep(0.5)
 			self.conn.send("PROGRESS 50\r\n")
-			time.sleep(0.5)
 			self.conn.send(DONE)
 			return True
 		elif command == "RESULTS":

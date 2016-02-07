@@ -3,10 +3,11 @@
 
 """ XML handler """
 
-
+import collections
 from copy import deepcopy
-import xml.etree.ElementTree as xmlet
 from itertools import product
+
+import xml.etree.ElementTree as xmlet
 import numpy as np
 
 from xml_tools import dict_to_xml, xml_to_dict, xml_to_iter_dict, bool_from_string
@@ -151,41 +152,56 @@ class XmlHandler:
 	def from_string(self,string):
 		return xmlet.fromstring(string)
 
-	def results_dic(self, strXml, lstParam):
+	def results_dic(self, strXml, lstParam, search='gridsearch'):
 		xmlElt = self.from_string(strXml)
-		dicResults = { "param_names": [], "results_names": [] }
+		diResults = { "results_names": [] }
 		# header names
 		xmlHeader = xmlElt[0]
-		for child in self.xmlParameters:
-			dicResults["param_names"].append(child.attrib["name"])
 		for child in xmlHeader:
-			dicResults["results_names"].append(child.attrib["name"])
+			diResults["results_names"].append(child.attrib["name"])
 		# content
-		for i,row in enumerate(xmlElt[1:]):
-			lstResult = []
-			for result in row:
-				lstResult.append(float(result.text))
-			dicResults[lstParam[i]] = lstResult
-		return dicResults
+		if search == 'gridsearch':
+			for i,row in enumerate(xmlElt[1:]):
+				lstResult = []
+				for result in row:
+					lstResult.append(float(result.text))
+				diResults[lstParam[i]] = lstResult
+		else:
+			for i,row in enumerate(xmlElt[1:]):
+				lstResult = []
+				for result in row:
+					lstResult.append(float(result.text))
+				if lstParam[i] in diResults:
+					diResults[lstParam[i]].append(lstResult)
+				else:
+					diResults[lstParam[i]] = [lstResult]
+		return diResults
 	
 	#-------------#
 	# Data saving #
 	#-------------#
 	
-	def save_results(self, strFileName, dicResults, path=''):
+	def save_results(self, strFileName, diResults, diVisit=None, path=''):
 		lstHeader = []
 		lstParamIdx = []
-		print(path)
 		strFileName = path + strFileName
-		lstHeader = list(dicResults["param_names"])
-		lstHeader.extend(dicResults["results_names"])
-		del dicResults["param_names"]
-		del dicResults["results_names"]
-		lstRows = []
+		# header
+		lstHeader = deepcopy(self.lstParamNames)
+		if diVisit is not None:
+			lstHeader.append("visits")
+		lstHeader.extend(diResults["results_names"])
+		del diResults["results_names"]
 		strHeader = " ".join(lstHeader)
-		for param, result in dicResults.iteritems():
+		# get the results
+		lstRows = []
+		for param, result in diResults.iteritems():
 			row = list(param)
-			row.extend(result)
+			if diVisit is not None:
+				row.append(diVisit[param])
+			if isinstance(result, collections.Iterable):
+				row.extend(result)
+			else:
+				row.append(result)
 			lstRows.append(row)
 		np.savetxt(	strFileName, np.array(lstRows, dtype=str), fmt='%s',
 					delimiter=" ", header=strHeader )

@@ -3,14 +3,15 @@
 
 """ Networks generator """
 
-
-from GraphClass import GraphClass
-from InputConnect import InputConnect
-from ..commonTools import mat_to_string
-from ..ioClasses import tensor_product
+from copy import deepcopy
 
 import numpy as np
-from copy import deepcopy
+
+import nngt.generation as ng
+
+from InputConnect import InputConnect
+from rescomp.commonTools import mat_to_string
+from rescomp.ioClasses import tensor_product
 
 
 
@@ -20,6 +21,13 @@ from copy import deepcopy
 #------------------------
 
 class NetGen:
+
+	__make_reservoir = {
+		"distance_rule": ng.distance_rule,
+		"erdos_renyi": ng.erdos_renyi,
+		"fixed_degree": ng.fixed_degree,
+		"newman_watts": ng.newman_watts,
+		"random_scale_free": ng.random_scale_free }
 	
 	def __init__(self, strPath, xmlHandler):
 		# xml handler
@@ -60,10 +68,17 @@ class NetGen:
 	# Networks generation #
 	#---------------------#
 
-	## generate networks dictionaries
-
 	def generate_from_xml(self, xmlRoot):
-		# generate the grahs dictionaries
+		"""
+		Funnction that generates a list of dicts containing all the properties 
+		of the graphs that will be created.
+
+		Parameters
+		----------
+		xmlRoot : :class:`xml.etree.ElementTree.Element`
+			Xml element containing the graph properties (parsed from the .xml
+			input)
+		"""
 		for xmlElt in xmlRoot:
 			dicGenerator = self.xmlHandler.convert_xml_to_dict(xmlElt, True)
 			# test for weight distribution
@@ -78,11 +93,15 @@ class NetGen:
 			lstKeys = dicGenerator.keys()
 			lstValues = dicGenerator.values()
 			self.lstDicGraphs += tensor_product(lstKeys, lstValues)
-		self.numNet = len(self.lstDicGraphs)
-	
-	## generate and save networks
+		self.numNet = len(self.lstDicGraphs)		
 	
 	def next_pair(self):
+		"""
+		Function that returns the reservoir/input pairs one after the others.
+		The first call generates the full list of the parameters necessary to
+		generate all the graphs.
+		Returns (None, None) once all pairs have been returned.
+		"""
 		idx = self.currentNetLine
 		if self.strGenerationType == "xml":
 			if idx < self.numNet: # why not just pop??
@@ -98,7 +117,9 @@ class NetGen:
 				self.currentStep = self.currentStep % (self.numAvg*self.numConnect)
 				# generate
 				idxTot = idx + self.currentStep
-				reservoir = GraphClass(dicCurrent)
+				gtype = dicCurrent["type"]
+				reservoir = self.__make_reservoir[gtype](**dicCurrent)
+				reservoir.set_types(-1,fraction=dicCurrent["ifrac"])
 				connect = InputConnect(network=reservoir, dicProp=dicConnect)
 				return reservoir, connect
 			else:
@@ -137,20 +158,20 @@ class NetGen:
 	#-------#
 
 	def gen_ned(self, dicIter):
-		''' generates missing entry between "Nodes", "Edges" and "Density" '''
-		lstMissingEntry = ["Edges", "Nodes", "Density"]
+		''' generates missing entry between "nodes", "edges" and "density" '''
+		lstMissingEntry = ["edges", "nodes", "density"]
 		for tplKey in dicIter.keys():
 			key = tplKey[0]
 			if key in lstMissingEntry:
 				idxKey = lstMissingEntry.index(key)
 				del lstMissingEntry[idxKey]
 		keyMissing = lstMissingEntry[0]
-		if keyMissing == "Edges":
-			dicIter["Edges"] = np.square(dicIter["Nodes"][0]) * dicIter["Density"][0],
-		elif keyMissing == "Nodes":
-			dicIter["Nodes"] = int(np.floor(dicIter["Edges"][0] / dicIter["Density"][0])),
+		if keyMissing == "edges":
+			dicIter["edges"] = np.square(dicIter["nodes"][0]) * dicIter["density"][0],
+		elif keyMissing == "nodes":
+			dicIter["nodes"] = int(np.floor(dicIter["edges"][0] / dicIter["density"][0])),
 		else:
-			dicIter["Density"] = dicIter["Edges"][0] / np.square(float(dicIter["Nodes"][0])),
+			dicIter["density"] = dicIter["edges"][0] / np.square(float(dicIter["nodes"][0])),
 	
 	def setPath(self, strPath):
 		if strPath[-1] == "/":
@@ -160,9 +181,9 @@ class NetGen:
 	
 	def num_nodes(self, dico):
 		try:
-			return dico["Nodes"][0]
+			return dico["nodes"][0]
 		except:
-			return int(np.floor(np.sqrt(dico["Edges"]/dico["Density"])))
+			return int(np.floor(np.sqrt(dico["edges"]/dico["density"])))
 	
 	def reset(self):
 		self.currentNetLine = 0

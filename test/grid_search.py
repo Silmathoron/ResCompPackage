@@ -14,9 +14,11 @@ from rescomp.plotting import phase_space
 
 
 
-test = Psx()
+#~ test = Psx(exploration='metropolis')
+test = Psx(exploration='gridsearch')
 test.run()
 
 dicResult = test.results
 #~ phase_space(dicResult.values()[0], cols_var=[0,1,2], heatmap=True)
 phase_space(dicResult.values()[0], cols_var=[0,1,2])
+#~ phase_space(dicResult.values()[0], cols_var=[0,1,2], col_size=-2)

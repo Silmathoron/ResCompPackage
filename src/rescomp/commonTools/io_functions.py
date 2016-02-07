@@ -33,22 +33,22 @@ def save_reservoir(graph, path=""):
 	''' get the neighbours of each vertex
 	slow!
 	@todo: test csr -> lil, then join '''
-	nNodes = graph.get_graph().num_vertices()
+	nNodes = graph.node_nb()
 	strList = ""
-	dicProp = graph.get_dict_properties()
+	#~ dicProp = graph.get_dict_properties()
+	graph_methods = ["node_nb", "edge_nb", "get_density", "get_graph_type"]
 	strName = path + graph.get_name()
-	with open(strName,"w") as fileNeighbourList:
-		for key, value in dicProp.iteritems():
-			fileNeighbourList.write("# {} {}\n".format(key,value))
-		for v1 in graph.get_graph().vertices():
-			fileNeighbourList.write("{}".format(graph.get_graph().vertex_index[v1]))
-			for e in v1.out_edges():
-				rWeight = graph.get_graph().edge_properties["type"][e]
-				if "weight" in graph.get_graph().edge_properties.keys():
-					# on multiplie les poids du graphe pour avoir les arcs négatifs
-					rWeight *= graph.get_graph().edge_properties["weight"][e]
-				fileNeighbourList.write(" {};{}".format(graph.get_graph().vertex_index[e.target()],rWeight))
-			fileNeighbourList.write("\n")
+	with open(strName,"w") as fileRes:
+		for method in graph_methods:
+			fileRes.write("# {} {}\n".format(method,getattr(graph,method)()))
+		matAdj = graph.adjacency_matrix().tolil()
+		for v1 in range(nNodes):
+			fileRes.write("{}".format(v1))
+			neighbours = matAdj.rows[v1]
+			weights = matAdj.data[v1]
+			for v2,w12 in zip(neighbours,weights):
+				fileRes.write(" {};{}".format(v2,w12))
+			fileRes.write("\n")
 	return strName[strName.rfind("/")+1:]
 
 def save_connect(connect, path, graph_name=''):

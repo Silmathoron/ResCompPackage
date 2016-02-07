@@ -39,6 +39,7 @@ class Ganet:
 			app = QtGui.QApplication(sys.argv)
 			self.gui = NetWindow(self) if gui else None
 		self.graphAnalyser = GraphAnalyzer(self) # GraphAnalysis qui servira à analyser les graphs
+		#~ self.graphAnalyser = None # GraphAnalysis qui servira à analyser les graphs
 		self.graphGenerator = GraphGenerator(self) # GraphGenerator pour les créer
 		self.gnuPlotter = GnuPlotter(self) # GnuPlotter pour les figures
 		self.fileManager = FileManager(self) # FileManager pour loading/saving
