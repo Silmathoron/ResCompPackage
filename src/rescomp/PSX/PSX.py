@@ -65,7 +65,7 @@ class Psx:
 		self.comm.connectionClient = connectionComm
 		self.comm.deploy()
 		# check success
-		self.connectionExplorer.send((STATUS,))
+		self.connectionExplorer.send({COMMAND: STATUS})
 		self.bConnected = self.connectionExplorer.recv()
 		# make directories
 		make_dirs([path+'results', path+'results/matrices'])

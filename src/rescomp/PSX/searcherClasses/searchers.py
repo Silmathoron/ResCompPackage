@@ -24,12 +24,16 @@ from rescomp.PSX.global_param import *
 #
 
 class PhaseSpaceExplorer(object):
+
+	__metaclass__  = ABCMeta
+
+	di_instructions = { COMMAND: None, SIZE: None, DATA: None, ID: None }
+	str_cid = "Context{}"
+	str_pid = "ParamSet{}"
 	
 	#------#
 	# Init #
 	#------#
-
-	__metaclass__  = ABCMeta
 	
 	def __init__(self, args, connection):
 		self.connectionComm = connection
@@ -39,6 +43,9 @@ class PhaseSpaceExplorer(object):
 		self.xmlHandler.process_input(INPUT, args.input)
 		self.numAvg = self.xmlHandler.get_header_item("averages")
 		self.args.path += "/" if self.args.path[-1] != "/" else ""
+		# ids
+		self.cid = 0 # number of contexts/scenarii sent
+		self.pid = 0 # number of parameter sets sent
 		# create children
 		self.netGenerator = NetGen(args.path, self.xmlHandler)
 		self.netGenerator.process_input_file(args.input)
@@ -55,32 +62,73 @@ class PhaseSpaceExplorer(object):
 	def send_xml_context(self):
 		''' send the xml context to the server '''
 		bContinue = False
-		strContext = self.xmlHandler.get_string_context()
-		bContinue = False if strContext is None else True
-		self.connectionComm.send((CONTEXT, strContext))
+		# fill the dictionary
+		di_context = self.di_instructions.copy()
+		di_context[COMMAND] = C_S
+		di_context[ID] = self.str_cid.format(self.cid)
+		di_context[DATA] = self.xmlHandler.get_string_context()
+		di_context[SIZE] = len(di_context[DATA])
+		# check context/scenario, then send
+		bContinue = False if di_context[DATA] is None else True
+		self.connectionComm.send(di_context)
 		bReceived = self.connectionComm.recv()
+		self.cid += 1
 		return bReceived*bContinue
 	
 	def send_next_matrices(self):
 		''' send the next pair of matrices to the server '''
 		self.reservoir, self.connect = self.netGenerator.next_pair()
 		if self.reservoir is not None:
-			strReservoir = mat_to_string(self.reservoir.get_mat_adjacency(), self.reservoir.get_name())
-			strConnect = mat_to_string(self.connect.as_csr(), self.connect.get_name())
-			self.connectionComm.send((MATRIX,strReservoir))
+			# fill the dictionary for the reservoir
+			di_reservoir = self.di_instructions.copy()
+			di_reservoir[COMMAND] = C_M
+			di_reservoir[ID] = self.reservoir.get_name()
+			di_reservoir[DATA] = mat_to_string(
+									self.reservoir.get_mat_adjacency(),
+									self.reservoir.get_name() )
+			di_reservoir[SIZE] = len(di_reservoir[DATA])
+			# send reservoir
+			self.connectionComm.send(di_reservoir)
 			bPairReceived = self.connectionComm.recv()
-			self.connectionComm.send((MATRIX,strConnect))
+			# fill the dictionary for the connectivity
+			di_connect = self.di_instructions.copy()
+			di_connect[COMMAND] = C_M
+			di_connect[ID] = self.connect.get_name()
+			di_connect[DATA] = mat_to_string( self.connect.as_csr(),
+											  self.connect.get_name() )
+			di_connect[SIZE] = len(di_connect[DATA])
+			# send connectivity
+			self.connectionComm.send(di_connect)
 			bPairReceived *= self.connectionComm.recv()
 			return bPairReceived
 		else:
 			return False
 
-	@abstractmethod
-	def send_parameters(self): pass
+	def send_parameters(self):
+		''' send the parameters to the server '''
+		strNameReservoir, strNameConnect = self.current_names()
+		# fill the dictionary
+		di_param = self.di_instructions.copy()
+		di_param[COMMAND] = C_P
+		di_param[ID] = self.str_pid.format(self.pid)
+		xmlParamList = self.xmlHandler.gen_xml_param( strNameConnect,
+													  strNameReservoir,
+													  self.lstParameterSet )
+		di_param[DATA] = self.xmlHandler.to_string(xmlParamList)
+		di_param[SIZE] = len(di_param[DATA])
+		di_param[MAXPROG] = float(len(xmlParamList)-1)
+		# send
+		self.connectionComm.send(di_param)
+		bReceived = self.connectionComm.recv()
+		self.pid += 1
+		return bReceived
 		
 	def get_results(self, lstParam):
-		''' launch the run and wait for the results, then get the scores into an array of reals '''
-		self.connectionComm.send((RUN,))
+		'''
+		launch the run and wait for the results, then get the scores into an
+		array of reals
+		'''
+		self.connectionComm.send({COMMAND: RUN})
 		strXmlResults = self.connectionComm.recv()
 		results = self.xmlHandler.results_dic(strXmlResults, lstParam)
 		return results
@@ -133,15 +181,6 @@ class GridSearcher(PhaseSpaceExplorer):
 
 	def init_parameters(self):
 		self.lstParameterSet = self.xmlHandler.gen_grid_search_param()
-
-	def send_parameters(self):
-		''' send the parameters to the server '''
-		strNameReservoir, strNameConnect = self.current_names()
-		xmlParamList = self.xmlHandler.gen_xml_param(strNameConnect,strNameReservoir,self.lstParameterSet)
-		rMaxProgress = float(len(xmlParamList)-1)
-		strParam = self.xmlHandler.to_string(xmlParamList)
-		self.connectionComm.send((PARAM, strParam, rMaxProgress))
-		bReceived = self.connectionComm.recv()
 
 	#-----#
 	# Run #

@@ -42,6 +42,7 @@ class Server:
 			self.strBuffer += self.conn.recv(4096)
 			bContinue = self.process()
 			if not bContinue:
+				print("stopping")
 				break
 		self.conn.close()
 
@@ -51,37 +52,31 @@ class Server:
 			idxCommandEnd = self.strBuffer.find("\r\n")
 		command = self.strBuffer[:idxCommandEnd]
 		self.strBuffer = self.strBuffer[idxCommandEnd:].lstrip("\r\n")
-		print("received command", command)
-		if command == "SCENARIO":
-			while "\r\n" not in self.strBuffer:
-				self.strBuffer += self.conn.recv(4096)
-			idxScenarioSize = self.strBuffer.find("\r\n")
-			nScenarioSize = int(self.strBuffer[:idxScenarioSize])
-			self.strBuffer = self.strBuffer[idxScenarioSize:].lstrip("\r\n")
-			while len(self.strBuffer) != nScenarioSize:
-				self.strBuffer += self.conn.recv(nScenarioSize-len(self.strBuffer))
-			print("received")
-			scenario = self.strBuffer
-			self.strBuffer = ""
-			self.conn.send(SCENARIO)
-			print("scenario sent back")
-			return True
-		elif command == MATRIX:
-			while "\r\n" not in self.strBuffer:
-				self.strBuffer += self.conn.recv(4096)
-			self.conn.send("MATRIX\r\n")
-			print("matrix sent back")
-			idxEnd = self.strBuffer.find("\r\n")
-			self.strBuffer = self.strBuffer[idxEnd:].lstrip("\r\n")
-			return True
-		elif command == "DATA":
-			while "</table>" not in self.strBuffer:
-				self.strBuffer += self.conn.recv(4096)
-			idxDataEnd = self.strBuffer.find("</table>")
-			self.data = xmlet.fromstring(self.strBuffer[:idxDataEnd+8])
-			self.strBuffer = self.strBuffer[idxDataEnd+8:].lstrip("\r\n")
-			self.conn.send(READY)
-			return True
+		print(command)
+		if command[:4] == "DATA":
+			command = command[5:]
+			idx_dt = command.find(" ")
+			datatype = command[:idx_dt]
+			print(datatype)
+			if datatype == "SCENARIO":
+				while command[0].isalpha():
+					command = command[1:]
+				nScenarioSize = int(command)
+				while len(self.strBuffer) != nScenarioSize:
+					self.strBuffer += self.conn.recv(nScenarioSize-len(self.strBuffer))
+				scenario = self.strBuffer
+				self.strBuffer = ""
+				self.conn.send("SCENARIO\r\n")
+				print("scenario sent back")
+				return True
+			elif datatype == "MATRIX":
+				while "\r\n" not in self.strBuffer:
+					self.strBuffer += self.conn.recv(4096)
+				self.conn.send("MATRIX\r\n")
+				print("matrix sent back")
+				idxEnd = self.strBuffer.find("\r\n")
+				self.strBuffer = self.strBuffer[idxEnd:].lstrip("\r\n")
+				return True
 		elif command == "RUN":
 			time.sleep(0.5)
 			self.conn.send("PROGRESS 50\r\n")

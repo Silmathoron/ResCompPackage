@@ -18,6 +18,8 @@ from rescomp.PSX.global_param import *
 
 class CommPSX(SocketComm):
 
+	diConvert = {C_M: MATRIX, C_P: PARAMETERS, C_S: SCENARIO }
+
 	def __init__(self,lstSrvHost,timeout):
 		super(CommPSX, self).__init__(lstSrvHost,timeout)
 		self.bReceived = False
@@ -29,7 +31,7 @@ class CommPSX(SocketComm):
 	def process_server_data(self, command):
 		''' processing the data received from the server '''
 		bSetEventGo = True
-		#~ print("server command", command)
+		print("server command", command)
 		if command == READY:
 			sys.stdout.write("\rProgress: 0%\r")
 			self.bReceived = True
@@ -61,9 +63,9 @@ class CommPSX(SocketComm):
 			xmlStats = xmlet.fromstring(self.socket.recv(4096))
 			print("Stats received")
 			self.stats.append(xmlStats)
-		elif command == SCENARIO:
+		elif command == "SCENARIO\r\n":
 			self.bReceived = True
-		elif command == MATRIX:
+		elif command == "MATRIX\r\n":
 			self.bReceived = True
 		elif command == BYE:
 			print("Connection closed by server")
@@ -75,30 +77,29 @@ class CommPSX(SocketComm):
 		if bSetEventGo:
 			self.eventGo.set()
 
-	def process_client_instructions(self, tplInstructions):
+	def process_client_instructions(self, diInstructions):
 		''' processing the instruction from the client '''
-		command = tplInstructions[0]
-		#~ print("client command", command)
-		if command == CONTEXT:
-			self.send_context(tplInstructions[1])
-			self.eventGo.wait()
-			self.send_to_client(self.bReceived)
-		elif command == PARAM:
-			self.send_parameters(tplInstructions[1:])
-			self.eventGo.wait()
-			self.send_to_client(self.bReceived)
-		elif command == MATRIX:
-			self.send_to_server(tplInstructions[1])
-			print("matrix sent, waiting for eventGo")
-			self.eventGo.wait()
-			self.send_to_client(self.bReceived)
-		elif command == RUN:
-			# start run, wait for results and send them
+		command = diInstructions[COMMAND]
+		if command == RUN:
 			self.send_run_start()
 		elif command == STATUS:
 			self.send_to_client(self.bSuccessDeploy)
 		elif command == QUIT:
 			self.send_quit()
+		else:
+			# get command informations
+			server_command = self.diConvert[command]
+			size = diInstructions[SIZE]
+			id_command = diInstructions[ID]
+			# send
+			self.send_to_server(server_command.format(size, id_command))
+			self.send_to_server(diInstructions[DATA])
+			print("waiting for eventGo")
+			self.eventGo.wait()
+			self.send_to_client(self.bReceived)
+		# set maxProgress
+		if command == C_P:
+			self.maxProgress = diInstructions[MAXPROG]
 		self.eventGo.clear()
 		self.bReceived = False
 
@@ -115,21 +116,19 @@ class CommPSX(SocketComm):
 
 	def send_context(self, strXmlContext):
 		''' sending the xml context to the server '''
-		self.send_to_server(SCENARIO)
-		# send string size then string
-		self.eventCanSend.set()
-		self.send_to_server("{}\r\n".format(len(strXmlContext)))
-		self.eventCanSend.set()
+		strContext = SCENARIO.format(len(strXmlContext))
+		self.send_to_server(strContext)
+		print(strContext)
 		self.send_to_server(strXmlContext)
 
 	def send_parameters(self, tplParam):
 		''' sending the parameters of the run to the server '''
-		self.send_to_server(DATA)
+		strParam = PARAMETERS.format(len(tplParam[0]), "P" + str(tplParam[1]))
+		self.send_to_server(strParam)
 		self.maxProgress = tplParam[1]
 		strParam = tplParam[0]
 		if "\r\n" not in strParam:
 			strParam += "\r\n"
-		self.eventCanSend.set()
 		self.send_to_server(strParam)
 
 	def send_quit(self):

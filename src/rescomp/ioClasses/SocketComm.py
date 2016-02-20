@@ -112,9 +112,10 @@ class SocketComm(object):
 	# Communicate #
 	#-------------#
 
-	#~ @sending_event
+	@sending_event
 	@timeoutErr
 	def send_to_server(self,strData):
+		''' sending information to the server '''
 		self.socket.sendall(strData)
 
 	def send_to_client(self, obj):
@@ -145,10 +146,10 @@ class SocketComm(object):
 				self.strBuffer = self.strBuffer[idxReturn:].lstrip("\r\n")
 		else:
 			command = self.strBuffer[:idxReturn]
-			if command != MATRIX:
+			if command != "MATRIX":
 				 command += "\r\n"
 			self.strBuffer = self.strBuffer[idxReturn:].lstrip("\r\n")
-		#~ print("command from server", command)
+		print("command from server", command)
 		return command
 
 	def recv_from_client(self):

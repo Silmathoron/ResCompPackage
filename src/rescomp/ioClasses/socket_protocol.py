@@ -21,7 +21,6 @@ def timeoutErr(f):
 	return wrapper
 
 def go_event(f):
-	#~ print("sending to client...")
 	''' thread event communication management '''
 	def wrapper(*args, **kw):
 		args[0].eventGo.wait()
@@ -30,13 +29,17 @@ def go_event(f):
 	return wrapper
 
 def sending_event(f):
-	#~ print("sending data to server")
 	''' thread event communication management '''
 	def wrapper(*args, **kw):
+		print("sending data to server")
 		args[0].eventCanSend.wait()
+		print("waiting for eventCanSend")
 		args[0].eventCanSend.clear()
-		return f(*args, **kw)
+		print("clear")
+		f(*args, **kw)
+		print("done")
 		args[0].eventCanSend.set()
+		print("setting eventCanSend")
 	return wrapper
 
 
@@ -45,8 +48,8 @@ def sending_event(f):
 # Parameters
 #------------------------
 
-DATA = "DATA\r\n"
-SCENARIO = "SCENARIO\r\n"
+PARAMETERS = "DATA PARAMETERS {} {}\r\n" # size and parameters id
+SCENARIO = "DATA SCENARIO {}\r\n" # size
 READY = "READY\r\n"
 DONE = "DONE\r\n"
 RESULTS = "RESULTS\r\n"
@@ -55,5 +58,5 @@ PROG = "PROGRESS"
 RUN = "RUN\r\n"
 QUIT = "QUIT\r\n"
 HELLO = "HELLO\r\n"
-MATRIX = "MATRIX"
+MATRIX = "DATA MATRIX {} {}\r\n" # size then identifier
 BYE = "BYE\r\n"

@@ -6,20 +6,23 @@
 import os
 
 # communication
-#~ DATA = "DATA\r\n"
-#~ SCENARIO = "SCENARIO\r\n"
 CONTEXT = "CONTEXT"
-#~ READY = "READY\r\n"
-#~ DONE = "DONE\r\n"
-#~ RESULTS = "RESULTS\r\n"
-#~ STATS = "STATS\r\n"
-#~ PROG = "PROGRESS"
 STATUS = "STATUS"
 RUNNING = "RUNNING"
 PARAM = "PARAM"
-MATRIX = "MATRIX"
+MAT_CLIENT = "MATRIX"
+SCENAR_CLIENT = "SCENARIO"
 RUN = "RUN\r\n"
-#~ QUIT = "QUIT\r\n"
+
+DATA = "data"
+SIZE= "size"
+ID = "id"
+MAXPROG = "max_progress"
+COMMAND = "client_command"
+C_P = "command_param"
+C_S = "command_scenario"
+C_M = "command_matrix"
+
 
 # files and paths
 IPATH = os.path.dirname(os.path.realpath(__file__)) + '/data/'

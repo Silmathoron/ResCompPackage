@@ -73,9 +73,9 @@ def csr_arrays(csrMat):
 
 def mat_to_string(csrMat, strId, strStorageClass="V"):
 	arrData, arrIndices, arrIndptr = csr_arrays(csrMat)
-	strShape = "{} {}".format(*csrMat.shape)
+	strShape = "({},{})".format(*csrMat.shape)
 	strData = " ".join(arrData.astype(str))
 	strIndices = " ".join(arrIndices.astype(str))
 	strIndptr = " ".join(arrIndptr.astype(str))
-	strMat = "MATRIX,{0},{1},{2};{3};{4};{5}\r\n".format(strId, strStorageClass, strShape, strData, strIndices, strIndptr)
+	strMat = "{0}&{1}&{2};{3};{4};{5}".format(strId, strStorageClass, strShape, strData, strIndices, strIndptr)
 	return strMat
