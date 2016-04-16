@@ -1,6 +1,6 @@
 <networks>
 	<graph>
-		<string name="type">distance_rule</string>
+		<string name="graph_type">distance_rule</string>
 		<int name="number">1</int>
 		<int name="nodes">1000</int>
 		<float name="density">
@@ -12,11 +12,13 @@
 		<float name="ifrac">0.5</float>
 		<float name="scale">0.04</float>
 		<int name="neuron_density">1000</int>
+		<bool name="weighted">True</bool>
 		<weights>
-			<bool name="Weighted">True</bool>
-			<string name="Distribution">Betweenness</string>
-			<float name="Min">0.001</float>
-			<float name="Max">5.0</float>
+			<string name="distribution">gaussian</string>
+			<parameters>
+				<float name="avg">1.5</float>
+				<float name="std">0.2</float>
+			</parameters>
 		</weights>
 		<Input>
 			<string name="Type">Random</string>
@@ -32,7 +34,7 @@
 	</graph>
 
 	<graph>
-		<string name="type">erdos_renyi</string>
+		<string name="graph_type">erdos_renyi</string>
 		<int name="number">1</int>
 		<int name="nodes">1000</int>
 <!--
@@ -44,11 +46,14 @@
 -->
 		<float name="density">0.008</float>
 		<float name="ifrac">0.5</float>
+		<bool name="weighted">True</bool>
 		<weights>
-			<bool name="Weighted">True</bool>
-			<string name="Distribution">Betweenness</string>
-			<float name="Min">0.001</float>
-			<float name="Max">5.0</float>
+			<string name="distribution">lin_corr</string>
+			<string name="correl_attribute">betweenness</string>
+			<string name="btype">edge</string>
+			<string name="use_weights">True</string>
+			<float name="lower">0.001</float>
+			<float name="upper">5.0</float>
 		</weights>
 		<Input>
 			<string name="Type">Random</string>

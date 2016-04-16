@@ -24,32 +24,10 @@ def make_dirs(lstDirectories):
 
 #
 #---
-# Graph saving
-#-----------------
+# Saving Connectivity
+#-----------------------
 
 ## to file
-
-def save_reservoir(graph, path=""):
-	''' get the neighbours of each vertex
-	slow!
-	@todo: test csr -> lil, then join '''
-	nNodes = graph.node_nb()
-	strList = ""
-	#~ dicProp = graph.get_dict_properties()
-	graph_methods = ["node_nb", "edge_nb", "get_density", "get_graph_type"]
-	strName = path + graph.get_name()
-	with open(strName,"w") as fileRes:
-		for method in graph_methods:
-			fileRes.write("# {} {}\n".format(method,getattr(graph,method)()))
-		matAdj = graph.adjacency_matrix().tolil()
-		for v1 in range(nNodes):
-			fileRes.write("{}".format(v1))
-			neighbours = matAdj.rows[v1]
-			weights = matAdj.data[v1]
-			for v2,w12 in zip(neighbours,weights):
-				fileRes.write(" {};{}".format(v2,w12))
-			fileRes.write("\n")
-	return strName[strName.rfind("/")+1:]
 
 def save_connect(connect, path, graph_name=''):
 	fileName = path +  connect.get_name() + '_' + graph_name

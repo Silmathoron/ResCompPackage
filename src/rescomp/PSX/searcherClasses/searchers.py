@@ -12,7 +12,7 @@ import numpy as np
 
 from rescomp.netClasses import NetGen
 from rescomp.ioClasses import XmlHandler
-from rescomp.commonTools import mat_to_string, save_reservoir, save_connect
+from rescomp.commonTools import mat_to_string, save_connect
 from rescomp.PSX.global_param import *
 
 
@@ -149,7 +149,7 @@ class PhaseSpaceExplorer(object):
 			return None, None
 
 	def save_networks(self, path):
-		save_reservoir(self.reservoir, path)
+		self.reservoir.to_file("{}{}".format(path,self.reservoir.get_name()))
 		save_connect(self.connect, path, self.reservoir.get_name())
 
 
